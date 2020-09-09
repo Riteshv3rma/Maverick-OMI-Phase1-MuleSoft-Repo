@@ -30,7 +30,8 @@ payload]]></ee:set-payload>
 	
 </flow>
 	<flow name="getCustomersFlow" doc:id="be4eb036-b71f-4da5-8e8f-512e77f33d78" >
-		<http:request method="GET" doc:name="Request" doc:id="91402d57-787f-47f9-8ae5-0f2397165855" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/customers"/>
+		<http:request method="GET" doc:name="Request" doc:id="91402d57-787f-47f9-8ae5-0f2397165855" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/customers">
+		</http:request>
 	</flow>
 	<flow name="updateCustomerFlow" doc:id="ed47c096-6f59-4ef9-a779-b91fb081dd13" >
 			<ee:transform doc:name="Transform Message" doc:id="cc7dc810-5f37-44ab-b0b8-81ece4c8880c" >

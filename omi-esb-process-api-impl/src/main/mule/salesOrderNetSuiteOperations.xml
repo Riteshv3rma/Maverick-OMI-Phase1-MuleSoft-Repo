@@ -39,6 +39,7 @@ payload]]></ee:set-payload>
 	</flow>
 	<flow name="getSalesOrderFlow">
 	<http:request method="GET" doc:name="Request" doc:id="50779bda-7831-4a67-9f24-520042e55792" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/salesorder">
+			<reconnect-forever frequency="${secure::reconnection.frequency}"/>
 			<http:query-params ><![CDATA[#[output application/java
 ---
 {

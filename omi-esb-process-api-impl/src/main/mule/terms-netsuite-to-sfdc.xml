@@ -149,7 +149,7 @@ fail: vars.customerTransactionStats.fail
 						</ee:transform>
 			<error-handler>
 					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b0bab4ad-2734-4d0a-9da3-a14c734b8606" type="ANY">
-						<logger level="ERROR" doc:name="Logger" doc:id="e8d994e4-1faf-4390-bf48-9abfcb9fb561" message="#[Error while upserting Terms data]"/>
+						<logger level="ERROR" doc:name="Logger" doc:id="e8d994e4-1faf-4390-bf48-9abfcb9fb561" message="Error while upserting Terms data"/>
 								<set-variable value="#[error.description]" doc:name="Set errorDescription" doc:id="25e2adea-b584-48d1-a981-c97a277378ac" variableName="errorDescription"/>
 					<ee:transform doc:name="create payload to mark Invoice as Error in NetSuite" doc:id="ac289e58-7f43-490e-b0ac-af0a82dd30d7" doc:description="create payload to mark Invoice as Error in NetSuite" >
 									<ee:message >
