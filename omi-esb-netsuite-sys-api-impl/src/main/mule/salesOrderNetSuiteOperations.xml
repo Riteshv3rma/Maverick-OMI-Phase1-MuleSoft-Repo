@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd">
+	<flow name="getSalesOrderByIdFlow" doc:id="20b45cf3-fe4e-4ab1-98ec-dae9318d504b" >
+		<ee:transform doc:name="Transform Message" doc:id="69aab374-1e43-4d35-b614-536895004ecb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map ({
+	internalId: $.internalId,
+	"type": "SALES_ORDER"
+} as Object {
+	class : "org.mule.module.netsuite.extension.api.RecordRef"
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<netsuite:get-list doc:name="Get list" doc:id="d5af737f-86e5-4802-b13f-46fae261d566" config-ref="NetSuite_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="ef3863cd-a687-4a6f-bdff-04779adf80d7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="createSalesOrderFlow" doc:id="35542af6-cd3f-4b13-83f3-b25a77852174" >
+	<ee:transform doc:name="Transform Message" doc:id="0e015338-6661-4437-8825-dee685560b46" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="division" ><![CDATA[%dw 2.0
+output application/json
+---
+if (payload[0].brand == "Cannabolish")
+"Cannabolish"
+else payload[0].division]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="fe21cfe1-0bc2-4932-a325-b5db8631d455" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+var entityname = vars.division ++ "." ++ "entityname"
+var entityid = vars.division ++ "." ++ "entityid"
+var departmentid = vars.division ++ "." ++ "departmentid"
+var shippingcode = vars.division ++ "." ++ "shippingcode"
+---
+payload map {
+	//"memo": $.brand,
+	"externalId": $.id,
+	"entity": {
+		"name": p(entityname) as String,
+		"internalId": p(entityid) as String		
+	} ,
+	"otherRefNum": $.poNumber,
+	("salesRep": {
+		"internalId": $.salesRepId as String
+	}) if ($.salesRepId != null) ,
+	"department": {
+		"internalId": p(departmentid) as String
+	},
+	"shippingAddress": {
+		"zip": $.address.zip,
+		"country": $.address.country,
+		"addr2": $.address.addr2,
+		"city": $.address.city,
+		"addr1": $.address.addr1,
+		"addr3": $.address.addr3,
+		"addrPhone": $.address.addrPhone,
+		"addressee": $.address.addressee,
+		"attention": $.address.attention,
+		"state": $.address.state
+	},
+	"customFieldList": {
+		"customField": [
+			   ({
+			"scriptId": "custbody6",
+			"value": $.notes
+		} as Object {class: "org.mule.module.netsuite.extension.api.StringCustomFieldRef"}) if $.notes != null,
+    {
+			"scriptId": "custbody16",
+			"value": { 
+				"internalId": p(shippingcode)
+			} as Object {class: "org.mule.module.netsuite.extension.api.ListOrRecordRef"}	
+		} as Object {class: "org.mule.module.netsuite.extension.api.SelectCustomFieldRef"}
+ 
+]
+	} as Object {class: "org.mule.module.netsuite.extension.api.CustomFieldList"},
+	"itemList": {
+		"item": $.productList map         {
+			"item": {
+			"internalId": $.internalId as String
+			},
+			("price": {
+				"internalId": "-1"
+			}) if ($.description == null),
+			("rate": "0.00") if ($.description == null),
+			("quantity": $.quantity) if ($.description == null),
+			("description": $.description) if $.description?
+		},
+		"replaceAll": true
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="694728ea-34c3-44a5-965e-4ceaeb7a158e" message="calling upsert salesorder call for salesforceid = #[payload[0].externalId]"/>
+	
+		<ee:transform doc:name="Transform Message" doc:id="8d05fbdf-54ff-4cfd-af70-2e166bc71539" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload[0]
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<netsuite:upsert-record recordType="SALES_ORDER" doc:name="Upsert record" doc:id="10f183e1-5ad0-4131-95b6-367933a5ccf4" config-ref="NetSuite_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="fca0fcdd-1be0-4101-89ed-d4182197e7d6">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="createSalesResponse" ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="93d4eb64-31ad-4856-bf70-08d60ba806a6" >
+			<when expression="#[vars.createSalesResponse.status.isSuccess]">
+				<ee:transform doc:name="Transform Message" doc:id="89fe90c1-cb6d-4c0c-8321-38a367d92741">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[{
+	"internalId": vars.createSalesResponse.baseRef.internalId
+}]]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="getSalesOrderByIdFlow" doc:id="51e3292a-eb43-4408-8d34-7b0318ce6dd0" name="getSalesOrderByIdFlow"/>
+				<ee:transform doc:name="Transform Message" doc:id="27b30e0c-333b-4c97-a863-8e82a9420f0e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"isSuccess": true,
+	"internalId": vars.createSalesResponse.baseRef.internalId,
+	"salesOrderNumber": payload[0].tranId
+	
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="716a7d09-5ee9-4ea9-9202-dbe33bbe8365" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"isSuccess": vars.createSalesResponse.status.isSuccess,
+	"errorMessage": vars.createSalesResponse.status.statusDetail[0].message
+	
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="getSalesOrderFlow">
+	<ee:transform doc:name="Transform Message" doc:id="33376aa2-15c2-444d-84df-47450b2bc813" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	basic: {
+		mainLine: {
+			searchValue: p('mainLineValue') as Boolean
+		},
+		"type" : {
+			operator: "ANY_OF",
+			searchValue: ["_salesOrder"]
+		},
+		"department": {
+			operator: "ANY_OF",
+			searchValue: (p('deptInternalIds') splitBy(',')) map {
+				internalId: $
+			}  as Object {class: "org.mule.module.netsuite.extension.api.ListOrRecordRef" }
+		},
+		lastModifiedDate: {
+			operator: "AFTER",
+			searchValue: vars.lastModDate as LocalDateTime {class: "java.time.LocalDateTime"}
+		},
+		trackingNumbers: {
+			operator: "NOT_EMPTY"
+		}
+}
+} as Object {class: "org.mule.module.netsuite.extension.api.TransactionSearch"}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<netsuite:search key="TRANSACTION" pageSize="1000" doc:name="Search" doc:id="ecdddaaa-e862-4260-957e-c5e2656b4b3a" config-ref="NetSuite_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="2aee6d9b-e30e-4f82-ac40-26bb203d6f9f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload map {
+	"internalId": $.internalId,
+	"lastModifiedDate": $.lastModifiedDate,
+	//"trackNo": $.customFieldList.customField[0].StringCustomFieldRef__custbodytrackno
+	"trackNo": $.linkedTrackingNumbers		
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	
+	
+</flow>
+</mule>

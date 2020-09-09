@@ -1,0 +1,664 @@
+  {
+        "expCostDiscTaxable": false,
+        "revRecOnRevCommitment": null,
+        "shippingTax2Rate": null,
+        "shippingAddress": {
+            "addressee": "Stephen Archbold",
+            "addr3": null,
+            "addrPhone": null,
+            "city": "WALPOLE",
+            "override": false,
+            "country": "UNITED_STATES",
+            "internalId": null,
+            "customFieldList": null,
+            "state": "MA",
+            "addr2": null,
+            "zip": "02081-4356",
+            "attention": null,
+            "addr1": "32 PINTAIL RD",
+            "nullFieldList": null,
+            "addrText": "Stephen Archbold\n32 PINTAIL RD \nWALPOLE MA 02081-4356\nUnited States"
+        },
+        "startDate": null,
+        "revRecEndDate": null,
+        "shippingCost": 0,
+        "timeDiscount": null,
+        "subsidiaryTaxRegNum": null,
+        "location": {
+            "type": null,
+            "internalId": "14",
+            "externalId": null,
+            "name": "Amazon"
+        },
+        "revenueStatus": null,
+        "giftCertRedemptionList": null,
+        "expCostDiscRate": null,
+        "revRecSchedule": null,
+        "handlingTaxCode": null,
+        "taxItem": {
+            "type": null,
+            "internalId": "10155",
+            "externalId": null,
+            "name": "Amazon Tax Code"
+        },
+        "taxRegOverride": null,
+        "itemCostDiscTaxable": false,
+        "timeDiscAmount": null,
+        "discountItem": {
+            "type": null,
+            "internalId": "10121",
+            "externalId": null,
+            "name": "Amazon Discount"
+        },
+        "entity": {
+            "type": null,
+            "internalId": "13535",
+            "externalId": null,
+            "name": "Amazon.com (Parent) : Amazon.com"
+        },
+        "trackingNumbers": null,
+        "nextApprover": null,
+        "toBePrinted": false,
+        "discountRate": "-0.40",
+        "partnersList": null,
+        "timeTaxRate1": null,
+        "syncSalesTeams": null,
+        "itemCostDiscTax1Amt": null,
+        "altHandlingCost": 0,
+        "terms": {
+            "type": null,
+            "internalId": "1",
+            "externalId": null,
+            "name": "Net 15"
+        },
+        "taxRate": 6.25,
+        "discountDate": null,
+        "total": 13.94,
+        "expCostDiscPrint": false,
+        "billingAddress": {
+            "addressee": "Stephen Archbold",
+            "addr3": null,
+            "addrPhone": null,
+            "city": "WALPOLE",
+            "override": false,
+            "country": "UNITED_STATES",
+            "internalId": null,
+            "customFieldList": null,
+            "state": "MA",
+            "addr2": null,
+            "zip": "02081-4356",
+            "attention": null,
+            "addr1": "32 PINTAIL RD",
+            "nullFieldList": null,
+            "addrText": "Stephen Archbold\n32 PINTAIL RD \nWALPOLE MA 02081-4356\nUnited States"
+        },
+        "partner": null,
+        "timeDiscPrint": false,
+        "internalId": "8670954",
+        "exchangeRate": null,
+        "expCostDiscTax1Amt": null,
+        "account": {
+            "type": null,
+            "internalId": "121",
+            "externalId": null,
+            "name": "1220 Accounts Receivable - Trade"
+        },
+        "postingPeriod": {
+            "type": null,
+            "internalId": "294",
+            "externalId": null,
+            "name": "Mar 2020"
+        },
+        "shipIsResidential": false,
+        "itemCostTaxCode": null,
+        "timeDiscRate": null,
+        "discountTotal": -0.4,
+        "customForm": {
+            "type": null,
+            "internalId": "100",
+            "externalId": null,
+            "name": "OMI Custom Invoice 1"
+        },
+        "externalId": "AMZ-US-1-111-5406123-7573057",
+        "customFieldList": {
+            "customField": [
+                {
+                    "internalId": "40",
+                    "scriptId": "custbody_ozlink_bill_shipping_to_recip",
+                    "value": false
+                },
+                {
+                    "internalId": "706",
+                    "scriptId": "custbody_celigo_amzio_accounts",
+                    "value": {
+                        "internalId": "1",
+                        "externalId": null,
+                        "name": "AMZ-US-1",
+                        "typeId": "81"
+                    }
+                },
+                {
+                    "internalId": "1094",
+                    "scriptId": "custbody_ava_taxoverride",
+                    "value": false
+                },
+                {
+                    "internalId": "697",
+                    "scriptId": "custbody_celigo_etail_tax_total_var",
+                    "value": 0
+                },
+                {
+                    "internalId": "698",
+                    "scriptId": "custbody_celigo_etail_ship_total_var",
+                    "value": 0
+                },
+                {
+                    "internalId": "708",
+                    "scriptId": "custbody_celigo_amzio_order_canceled",
+                    "value": false
+                },
+                {
+                    "internalId": "702",
+                    "scriptId": "custbody_celigo_etail_channel",
+                    "value": {
+                        "internalId": "1",
+                        "externalId": null,
+                        "name": "Amazon",
+                        "typeId": "82"
+                    }
+                },
+                {
+                    "internalId": "716",
+                    "scriptId": "custbody_celigo_amzmcf_can_order_exp",
+                    "value": false
+                },
+                {
+                    "internalId": "1106",
+                    "scriptId": "custbody12",
+                    "value": "Amazon Division"
+                },
+                {
+                    "internalId": "1",
+                    "scriptId": "custbody1",
+                    "value": "Do Not Collect-Pymt every 2 weeks with reserve holdback"
+                },
+                {
+                    "internalId": "108",
+                    "scriptId": "custbody8",
+                    "value": false
+                },
+                {
+                    "internalId": "714",
+                    "scriptId": "custbody_celigo_amzio_is_prime",
+                    "value": false
+                },
+                {
+                    "internalId": "695",
+                    "scriptId": "custbody_celigo_etail_disc_total_var",
+                    "value": 0
+                },
+                {
+                    "internalId": "38",
+                    "scriptId": "custbody_ozlink_websitelink",
+                    "value": "http://www.ozlinkshipping.com"
+                },
+                {
+                    "internalId": "700",
+                    "scriptId": "custbody_celigo_etail_order_id",
+                    "value": "111-5406123-7573057"
+                },
+                {
+                    "internalId": "78",
+                    "scriptId": "custbodysps_shipmentladingquantity",
+                    "value": 1
+                },
+                {
+                    "internalId": "703",
+                    "scriptId": "custbody_celigo_etail_auto_bill_exp",
+                    "value": false
+                },
+                {
+                    "internalId": "705",
+                    "scriptId": "custbody_celigo_etail_order_date",
+                    "value": "2020-02-22T08:33:34.253Z"
+                },
+                {
+                    "internalId": "1088",
+                    "scriptId": "custbody_ava_shippingtaxinclude",
+                    "value": false
+                },
+                {
+                    "internalId": "35",
+                    "scriptId": "custbody_ozlink_bill_shipping_to_3rd",
+                    "value": false
+                },
+                {
+                    "internalId": "701",
+                    "scriptId": "custbody_celigo_etail_order_total_var",
+                    "value": 0
+                },
+                {
+                    "internalId": "1087",
+                    "scriptId": "custbody_ava_is_sellerimporter",
+                    "value": false
+                },
+                {
+                    "internalId": "715",
+                    "scriptId": "custbody_celigo_amzmcf_order_exported",
+                    "value": false
+                },
+                {
+                    "internalId": "699",
+                    "scriptId": "custbody_celigo_etail_order_fulfilled",
+                    "value": false
+                },
+                {
+                    "internalId": "17",
+                    "scriptId": "custbody_free_shipping",
+                    "value": false
+                }
+            ]
+        },
+        "memo": null,
+        "billingAccount": null,
+        "source": null,
+        "salesTeamList": null,
+        "currency": null,
+        "taxTotal": 0.36,
+        "expCostDiscAmount": null,
+        "promotionsList": null,
+        "leadSource": null,
+        "itemCostTaxRate2": null,
+        "shipGroupList": null,
+        "department": null,
+        "isTaxable": true,
+        "balance": null,
+        "timeDiscTaxable": false,
+        "createdDate": "2020-03-08T00:27:13",
+        "messageSel": null,
+        "handlingTax1Rate": null,
+        "itemCostDiscount": null,
+        "tax2Total": null,
+        "billAddressList": null,
+        "vatRegNum": null,
+        "message": null,
+        "estGrossProfit": null,
+        "itemCostDiscPrint": false,
+        "expCostTaxRate2": null,
+        "expCostTaxCode": null,
+        "timeDiscTax1Amt": null,
+        "salesRep": null,
+        "salesGroup": null,
+        "handlingCost": 0,
+        "tranId": "669211",
+        "subTotal": 13.98,
+        "job": null,
+        "expCostDiscount": null,
+        "dueDate": "2020-03-22T22:00:00",
+        "linkedTrackingNumbers": null,
+        "excludeCommission": null,
+        "lastModifiedDate": "2020-04-28T09:33:32",
+        "billingSchedule": null,
+        "tranDate": "2020-03-07T22:00:00",
+        "handlingTax2Rate": null,
+        "syncPartnerTeams": null,
+        "toBeEmailed": false,
+        "itemCostTaxRate1": null,
+        "tranIsVsoeBundle": null,
+        "itemCostList": null,
+        "shippingTax1Rate": null,
+        "subsidiary": null,
+        "timeList": null,
+        "contribPct": null,
+        "altShippingCost": 0,
+        "deferredRevenue": null,
+        "itemCostDiscAmount": null,
+        "nexus": null,
+        "taxDetailsList": null,
+        "status": "Open",
+        "opportunity": null,
+        "timeTaxCode": null,
+        "totalCostEstimate": null,
+        "expCostTaxRate1": null,
+        "vsoeAutoCalc": null,
+        "fax": null,
+        "shippingTaxCode": null,
+        "revRecStartDate": null,
+        "giftCertApplied": null,
+        "itemList": {
+            "replaceAll": true,
+            "item": [
+                {
+                    "taxAmount": null,
+                    "vsoeDeferral": null,
+                    "price": {
+                        "type": null,
+                        "internalId": "-1",
+                        "externalId": null,
+                        "name": null
+                    },
+                    "revRecEndDate": null,
+                    "shipGroup": null,
+                    "quantityAvailable": null,
+                    "location": null,
+                    "revRecSchedule": null,
+                    "grossAmt": null,
+                    "vsoePrice": null,
+                    "giftCertMessage": null,
+                    "taxRate1": null,
+                    "currentPercent": null,
+                    "vsoeAllocation": null,
+                    "chargeType": null,
+                    "tax1Amt": null,
+                    "giftCertFrom": null,
+                    "amountOrdered": null,
+                    "vsoeIsEstimate": null,
+                    "customFieldList": {
+                        "customField": [
+                            {
+                                "internalId": "3",
+                                "scriptId": "custcol1",
+                                "value": "011"
+                            },
+                            {
+                                "internalId": "43",
+                                "scriptId": "custcol5",
+                                "value": "816920000118"
+                            },
+                            {
+                                "internalId": "93",
+                                "scriptId": "custcol9",
+                                "value": "EACH"
+                            },
+                            {
+                                "internalId": "109",
+                                "scriptId": "custcol15",
+                                "value": false
+                            },
+                            {
+                                "internalId": "165",
+                                "scriptId": "custcol20",
+                                "value": "PNK 2.0"
+                            },
+                            {
+                                "internalId": "688",
+                                "scriptId": "custcol_celigo_etail_order_line_id",
+                                "value": "01738298025890"
+                            },
+                            {
+                                "internalId": "690",
+                                "scriptId": "custcol_celigo_etail_can_line_exprted",
+                                "value": false
+                            },
+                            {
+                                "internalId": "692",
+                                "scriptId": "custcol_celigo_etail_discount_code",
+                                "value": "FBA Subscribe & Save Discount"
+                            },
+                            {
+                                "internalId": "693",
+                                "scriptId": "custcol_celigo_etail_order_line_tax",
+                                "value": 0
+                            }
+                        ]
+                    },
+                    "amount": 7.99,
+                    "vsoeAmount": null,
+                    "vsoePermitDiscount": null,
+                    "description": "Fresh Wave Spray, 8oz (Amber) BOV\n",
+                    "options": null,
+                    "units": {
+                        "type": null,
+                        "internalId": "63",
+                        "externalId": null,
+                        "name": "EA"
+                    },
+                    "line": 1,
+                    "serialNumbers": null,
+                    "isTaxable": false,
+                    "department": {
+                        "type": null,
+                        "internalId": "10",
+                        "externalId": null,
+                        "name": "Consumer"
+                    },
+                    "giftCertRecipientName": null,
+                    "licenseCode": null,
+                    "percentComplete": null,
+                    "costEstimate": null,
+                    "job": null,
+                    "orderLine": null,
+                    "binNumbers": null,
+                    "deferRevRec": null,
+                    "taxDetailsReference": null,
+                    "quantity": 1,
+                    "giftCertRecipientEmail": null,
+                    "vsoeSopGroup": null,
+                    "subscriptionLine": null,
+                    "inventoryDetail": {
+                        "customForm": null,
+                        "inventoryAssignmentList": {
+                            "replaceAll": false,
+                            "inventoryAssignment": [
+                                {
+                                    "quantityAvailable": 420,
+                                    "internalId": "2946803",
+                                    "issueInventoryNumber": {
+                                        "type": null,
+                                        "internalId": "36168",
+                                        "externalId": null,
+                                        "name": "4907"
+                                    },
+                                    "expirationDate": null,
+                                    "binNumber": null,
+                                    "toBinNumber": null,
+                                    "quantity": 1,
+                                    "receiptInventoryNumber": null
+                                }
+                            ]
+                        },
+                        "nullFieldList": null
+                    },
+                    "item": {
+                        "type": null,
+                        "internalId": "9012",
+                        "externalId": null,
+                        "name": "100 - Consumer : 011 Spray, 8oz (Amber) BOV"
+                    },
+                    "taxCode": null,
+                    "revRecStartDate": null,
+                    "costEstimateType": null,
+                    "taxRate2": null,
+                    "rate": null,
+                    "excludeFromRateRequest": null,
+                    "quantityRemaining": null,
+                    "itemIsFulfilled": null,
+                    "vsoeDelivered": null,
+                    "chargesList": null,
+                    "clazz": null,
+                    "quantityFulfilled": null,
+                    "giftCertNumber": null,
+                    "catchUpPeriod": null,
+                    "shipAddress": null,
+                    "quantityOrdered": null,
+                    "shipMethod": null,
+                    "quantityOnHand": null
+                },
+                {
+                    "taxAmount": null,
+                    "vsoeDeferral": null,
+                    "price": {
+                        "type": null,
+                        "internalId": "-1",
+                        "externalId": null,
+                        "name": null
+                    },
+                    "revRecEndDate": null,
+                    "shipGroup": null,
+                    "quantityAvailable": null,
+                    "location": null,
+                    "revRecSchedule": null,
+                    "grossAmt": null,
+                    "vsoePrice": null,
+                    "giftCertMessage": null,
+                    "taxRate1": null,
+                    "currentPercent": null,
+                    "vsoeAllocation": null,
+                    "chargeType": null,
+                    "tax1Amt": null,
+                    "giftCertFrom": null,
+                    "amountOrdered": null,
+                    "vsoeIsEstimate": null,
+                    "customFieldList": {
+                        "customField": [
+                            {
+                                "internalId": "3",
+                                "scriptId": "custcol1",
+                                "value": "011"
+                            },
+                            {
+                                "internalId": "43",
+                                "scriptId": "custcol5",
+                                "value": "816920000118"
+                            },
+                            {
+                                "internalId": "93",
+                                "scriptId": "custcol9",
+                                "value": "EACH"
+                            },
+                            {
+                                "internalId": "109",
+                                "scriptId": "custcol15",
+                                "value": false
+                            },
+                            {
+                                "internalId": "165",
+                                "scriptId": "custcol20",
+                                "value": "PNK 2.0"
+                            },
+                            {
+                                "internalId": "690",
+                                "scriptId": "custcol_celigo_etail_can_line_exprted",
+                                "value": false
+                            }
+                        ]
+                    },
+                    "amount": 5.99,
+                    "vsoeAmount": null,
+                    "vsoePermitDiscount": null,
+                    "description": "Fresh Wave Spray, 8oz (Amber) BOV\n",
+                    "options": null,
+                    "units": {
+                        "type": null,
+                        "internalId": "63",
+                        "externalId": null,
+                        "name": "EA"
+                    },
+                    "line": 12,
+                    "serialNumbers": null,
+                    "isTaxable": true,
+                    "department": {
+                        "type": null,
+                        "internalId": "10",
+                        "externalId": null,
+                        "name": "Consumer"
+                    },
+                    "giftCertRecipientName": null,
+                    "licenseCode": null,
+                    "percentComplete": null,
+                    "costEstimate": null,
+                    "job": null,
+                    "orderLine": null,
+                    "binNumbers": null,
+                    "deferRevRec": null,
+                    "taxDetailsReference": null,
+                    "quantity": 1,
+                    "giftCertRecipientEmail": null,
+                    "vsoeSopGroup": null,
+                    "subscriptionLine": null,
+                    "inventoryDetail": {
+                        "customForm": null,
+                        "inventoryAssignmentList": {
+                            "replaceAll": false,
+                            "inventoryAssignment": [
+                                {
+                                    "quantityAvailable": 420,
+                                    "internalId": "2947306",
+                                    "issueInventoryNumber": {
+                                        "type": null,
+                                        "internalId": "36168",
+                                        "externalId": null,
+                                        "name": "4907"
+                                    },
+                                    "expirationDate": null,
+                                    "binNumber": null,
+                                    "toBinNumber": null,
+                                    "quantity": 1,
+                                    "receiptInventoryNumber": null
+                                }
+                            ]
+                        },
+                        "nullFieldList": null
+                    },
+                    "item": {
+                        "type": null,
+                        "internalId": "9012",
+                        "externalId": null,
+                        "name": "100 - Consumer : 011 Spray, 8oz (Amber) BOV"
+                    },
+                    "taxCode": null,
+                    "revRecStartDate": null,
+                    "costEstimateType": null,
+                    "taxRate2": null,
+                    "rate": null,
+                    "excludeFromRateRequest": null,
+                    "quantityRemaining": null,
+                    "itemIsFulfilled": null,
+                    "vsoeDelivered": null,
+                    "chargesList": null,
+                    "clazz": null,
+                    "quantityFulfilled": null,
+                    "giftCertNumber": null,
+                    "catchUpPeriod": null,
+                    "shipAddress": null,
+                    "quantityOrdered": null,
+                    "shipMethod": null,
+                    "quantityOnHand": null
+                }
+            ]
+        },
+        "email": null,
+        "shipDate": "2020-03-07T22:00:00",
+        "recognizedRevenue": null,
+        "taxDetailsOverride": null,
+        "nullFieldList": null,
+        "estGrossProfitPercent": null,
+        "timeTaxRate2": null,
+        "discountAmount": null,
+        "createdFrom": null,
+        "promoCode": null,
+        "amountPaid": null,
+        "endDate": null,
+        "approvalStatus": null,
+        "currencyName": null,
+        "canHaveStackable": false,
+        "otherRefNum": "111-5406123-7573057",
+        "clazz": null,
+        "shipAddressList": null,
+        "toBeFaxed": false,
+        "entityTaxRegNum": null,
+        "accountingBookDetailList": null,
+        "amountRemaining": null,
+        "onCreditHold": null,
+        "itemCostDiscRate": null,
+        "recurringBill": null,
+        "salesEffectiveDate": null,
+        "shipMethod": {
+            "type": null,
+            "internalId": "221",
+            "externalId": null,
+            "name": "Best Way"
+        },
+        "expCostList": null,
+        "fob": null
+    }

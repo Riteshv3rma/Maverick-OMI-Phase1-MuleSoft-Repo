@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="send-email-notificationFlow" doc:id="0a82030e-8128-4ae6-9636-90b71d3f010a" >
+		<ee:transform doc:name="Transform Message" doc:id="599a894d-605f-45fe-ac5b-2ace8edec68f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+				<email:send doc:name="Send" doc:id="9a858a26-a289-4324-8876-e4ffea8a74e2" config-ref="Email_SMTP" fromAddress="${secure::dev.user}" subject="#[payload.subject]" toAddresses='#[payload.toEmails splitBy(",")]'>
+		  	<email:body contentType="text/plain" encoding="UTF-8">
+				<email:content ><![CDATA[#[payload.emailBody]]]></email:content>
+			</email:body>
+		</email:send>
+		<logger level="INFO" doc:name="Logger" doc:id="257600cf-fb28-4df5-bf9e-31601877396e" message="Sent message successfully."/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="5843d271-fc5f-4610-8b35-27db20d4f10b" type="ANY">
+				<logger level="ERROR" doc:name="Logger" doc:id="e02c4ca8-c291-4919-8d0e-4879f31a5f19" message="Error while sending email = #[error.description]"/>
+			</on-error-continue>
+		</error-handler>
+		
+	</flow>
+</mule>

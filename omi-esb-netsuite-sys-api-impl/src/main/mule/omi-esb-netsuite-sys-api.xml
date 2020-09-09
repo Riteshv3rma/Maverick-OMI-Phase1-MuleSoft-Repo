@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+ <flow name="omi-esb-netsuite-sys-api-main">
+        <http:listener config-ref="omi-esb-netsuite-sys-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="omi-esb-netsuite-sys-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+               <on-error-propagate type="ANY">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="b9511457-612e-4b48-8df6-c49350d0850f">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: error.description}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[503]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="omi-esb-netsuite-sys-api-console">
+        <http:listener config-ref="omi-esb-netsuite-sys-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="omi-esb-netsuite-sys-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="patch:\netsuite\customers\(internalId):omi-esb-netsuite-sys-api-config">
+		<flow-ref doc:name="updateCustomerFlow" doc:id="c279244d-a863-44c5-8d7e-08d57ebf512c" name="updateCustomerFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="d5eff889-dbab-4fbc-a5c8-e4480b654fa3" message="payload after updating customer= #[payload]"/>
+    </flow>
+    <flow name="patch:\netsuite\invoices\(internalId):application\json:omi-esb-netsuite-sys-api-config">
+		<flow-ref doc:name="updateInvoiceFlow" doc:id="d05e82a0-ec05-4c46-a6c3-e5a199a86bd9" name="updateInvoiceFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="875aa122-9cd2-4fe5-9fd9-9ede2b7b5a3d" message="payload after updating invoice = #[payload]"/>
+    </flow>
+    <flow name="get:\netsuite\customers:omi-esb-netsuite-sys-api-config">
+		<flow-ref doc:name="getCustomersFlow" doc:id="ac349106-2958-4a20-9cd5-d542e4e3686d" name="getCustomersFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="110698ce-7f6d-4a1e-a0e9-b112c89ca871" message="getCustomer Response = #[payload]"/>
+    </flow>
+    <flow name="get:\netsuite\invoices:omi-esb-netsuite-sys-api-config">
+		<choice doc:name="Choice" doc:id="a6376822-344f-44e7-aae0-4f89f9e4f0e3" >
+			<when expression="#[attributes.queryParams.deleted]">
+				<set-variable value="#[attributes.queryParams.lastDeletedDate]" doc:name="Set lastDeletedDate" doc:id="78b50f63-273d-45ab-bee9-3a4130115cb2" variableName="lastDeletedDate"/>
+				<flow-ref doc:name="getDeletedInvoicesFlow" doc:id="77282021-5fae-4a2a-843c-0fc31ba1bcd4" name="getDeletedInvoicesFlow"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="getInvoicesFlow" doc:id="71792180-b20c-48dd-bde6-765d69dd3456" name="getInvoicesFlow"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="32ed9275-4bfe-479a-a509-9f556e0a4126" message="getInvoices response payload = #[payload]" />
+    </flow>
+    <flow name="post:\netsuite\invoices:omi-esb-netsuite-sys-api-config">
+		<flow-ref doc:name="getInvoiceByIdFlow" doc:id="bbe96139-36de-4750-a7dd-a8ca4feeacf4" name="getInvoiceByIdFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="9843a1ab-3061-4c8f-b951-89ba944fb074" message="getInvoice responses By Invoice InternalIds = #[payload]"/>
+    </flow>
+    <flow name="get:\netsuite\salesorder:omi-esb-netsuite-sys-api-config">
+		<set-variable value="#[attributes.queryParams.lastModifiedDate]" doc:name="Set lastModDate" doc:id="b345487b-f4e3-47f7-b9ab-eff5cad2d899" variableName="lastModDate"/>
+		<flow-ref doc:name="getSalesOrderFlow" doc:id="29a09e60-0a07-4ab9-b0f8-d2da39f3f0e9" name="getSalesOrderFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="e9361e2a-89a9-46bd-87ed-71d47a4387f0" message="getSalesOrderResponse after #[vars.lastModDate]  = #[payload]"/>
+    </flow>
+    <flow name="get:\netsuite\salesorder\(internalId):omi-esb-netsuite-sys-api-config">
+		<ee:transform doc:name="Transform Message" doc:id="c02a45fd-fa69-4309-b4db-6d86899cefda" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	"internalId": attributes.uriParams.internalId
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="getSalesOrderByIdFlow" doc:id="86463f6a-abc9-48f5-b34c-e44fc3121927" name="getSalesOrderByIdFlow"/>
+    </flow>
+	<flow name="get:\netsuite\invoices\(internalId):omi-esb-netsuite-sys-api-config">
+        <ee:transform doc:name="Transform Message" doc:id="d2038850-aa5e-4d76-a74e-0adf52a6ba29" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	"internalId": attributes.uriParams.internalId
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="getInvoiceByIdFlow" doc:id="d9a192a1-d988-4f68-aa5b-9f410f036f27" name="getInvoiceByIdFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a6ecd8fb-0fdc-4146-bd87-24d50e173814" message="getInvoiceByIdResponse = #[payload]"/>
+    </flow>
+    <flow name="get:\netsuite\customers\(internalId):omi-esb-netsuite-sys-api-config">
+		<ee:transform doc:name="Transform Message" doc:id="0b325b76-9c92-4037-9eb3-d2f54c85649a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	"internalId": attributes.uriParams.internalId
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="getCustomerByIdFlow" doc:id="0946d733-4e68-466d-8e3c-88fa28cc4f94" name="getCustomerByIdFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="ace6d4fc-6075-4d54-872c-50a999d66d04" message="getCustomerByIdResponse = #[payload]"/>
+    </flow>
+    <flow name="post:\netsuite\customers:omi-esb-netsuite-sys-api-config">
+    <flow-ref name="getCustomerByIdFlow" doc:name="getCustomerByIdFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="36c84e99-ad63-45f0-9022-cf7a4eeba5ba" message="getCustomerById  post call response= #[payload]"/>
+    </flow>
+    <flow name="post:\netsuite\salesorder:omi-esb-netsuite-sys-api-config">
+		<flow-ref doc:name="createSalesOrderFlow" doc:id="c3d4457d-07ed-4c2d-add8-2a049d75051f" name="createSalesOrderFlow"/>
+    </flow>
+</mule>

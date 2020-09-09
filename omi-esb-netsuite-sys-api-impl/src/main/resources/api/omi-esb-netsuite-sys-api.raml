@@ -1,0 +1,238 @@
+#%RAML 1.0
+title: Invoice System API
+version: v1.0
+baseUri: http://localhost:8081/api
+
+types:
+  invoice: !include dataTypes/Invoices.raml
+  errorResponse: !include dataTypes/ErrorResponse.raml
+  successResponse: !include dataTypes/SuccessResponse.raml
+
+traits: 
+  invoiceSearch: !include traits/trait-collection.raml
+
+/netsuite:
+    /invoices:
+      description: |
+        Working with invoices:
+        * Retrieving all invoices from NetSuite
+        * Creating invoices in NetSuite
+      get:
+        displayName: Get invoices
+        description: |
+          Retrieve all the Invoices according to the filtering.
+        is: [ invoiceSearch ]      
+        responses:
+          200:
+            body:
+              application/json:
+      post:
+        displayName: Get list of Invoices
+        description: |
+          Get list of Invoices
+        body:
+          application/json:
+        responses:
+          201:
+            description: Get list of Invoices
+            body:
+              application/json:
+      /{internalId}:
+        description: |
+          Working with invoices:
+          * Retrieving specific invoice
+          * Updating specific invoice
+          * Deleting specific invoice
+        uriParameters:
+          internalId:
+            type: string | integer
+            example: "301980"
+            description: Represents the invoice ID of native system
+        get:
+          displayName: Get invoice by id
+          description: Get Invoice by ID
+          responses:
+            200:
+              body:
+                application/json:
+                  type: invoice
+          #        example: !include examples/get_invoiceById_example.yaml
+            404:
+              body:
+                application/json:
+                  type: errorResponse
+                  example: |
+                    {
+                      "message": "Resource not found"
+                    }
+        patch:
+          displayName: Update invoice by id
+          description: Update Invoice specified by ID
+          body:
+            application/json:
+          responses:
+            200:
+              body:
+                application/json:
+            404:
+              body:
+                application/json:
+            422:
+              description: Unprocessable entity
+              body:
+                application/json:                 
+                
+                    
+    /customers:
+      description: |
+        Working with customers:
+        * Retrieving all customers from NetSuite
+        * Creating customers in NetSuite
+      get:
+        displayName: Get customers
+        description: |
+          Retrieve all the Customers according to the filtering.     
+        responses:
+          200:
+            body:
+              application/json:
+      post:
+        displayName: Create customer
+        description: |
+          Create a new Customer
+        body:
+          application/json:
+        responses:
+          201:
+            description: Created
+            body:
+              application/json:
+                        
+          422:
+            description: Unprocessable entity
+            body:
+              application/json:
+                type: errorResponse
+                
+      /{internalId}:
+        description: |
+          Working with customers:
+          * Retrieving specific customer
+          * Updating specific customer
+          * Deleting specific customer
+        uriParameters:
+          internalId:
+            type: string | integer
+            example: "301980"
+            description: Represents the customer ID of native system
+        get:
+          displayName: Get customer by id
+          description: Get Customer by ID
+          responses:
+            200:
+              body:
+                application/json:
+          #        type: customer
+          #        example: !include examples/get_customerById_example.yaml
+            404:
+              body:
+                application/json:
+                  type: errorResponse
+                  example: |
+                    {
+                      "message": "Resource not found"
+                    }
+        patch:
+          displayName: Update customer by id
+          description: Update Customer specified by ID
+          body:
+            application/json:
+         #     type: customer
+         #     example: !include examples/put_customer_example.yaml
+          responses:
+            200:
+              body:
+                application/json:
+                  type: successResponse
+                  example: |
+                    {
+                      "status": "OK"
+                    }
+            404:
+              body:
+                application/json:
+                  type: errorResponse
+                  example: |
+                    {
+                      "message": "Resource not found"
+                    }
+            422:
+              description: Unprocessable entity
+              body:
+                application/json:
+                  type: errorResponse
+                  example: |
+                    {
+                      "message": "You have to specify the whole information related to Customer."
+                    }
+                    
+                    
+                    
+    /salesorder:    
+      description: |
+        Working with salesorder:
+        * Retrieving all salesorder from NetSuite
+        * Creating salesorder in NetSuite      
+      get:
+        displayName: Get salesorder
+        description: |
+          Retrieve all the salesorder according to the filtering.     
+        responses:
+          200:
+            body:
+              application/json:
+      post:
+        displayName: Create salesorder
+        description: |
+          Create a new salesorder
+        body:
+          application/json:
+        responses:
+          201:
+            description: Created
+            body:
+              application/json:
+                        
+          422:
+            description: Unprocessable entity
+            body:
+              application/json:
+              
+      /{internalId}:
+        description: |
+          Working with invoices:
+          * Retrieving specific salesorder
+          * Updating specific salesorder
+          * Deleting specific salesorder
+        uriParameters:
+          internalId:
+            type: string | integer
+            example: "301980"
+            description: Represents the salesorder ID of native system
+        get:
+          displayName: Get salesorder by id
+          description: Get salesorder by ID
+          responses:
+            200:
+              body:
+                application/json:
+            404:
+              body:
+                application/json:
+                  type: errorResponse
+                  example: |
+                    {
+                      "message": "Resource not found"
+                    }
+      
+      

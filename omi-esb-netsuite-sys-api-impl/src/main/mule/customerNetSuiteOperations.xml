@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	
+	<flow name="getCustomerByIdFlow" >
+		<ee:transform doc:name="Transform Message" doc:id="8326fb1b-fe80-4420-ad20-d2365cd5a8ab" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map ({
+	internalId: $.internalId,
+	"type": "CUSTOMER"
+} as Object {
+	class : "org.mule.module.netsuite.extension.api.RecordRef"
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<netsuite:get-list config-ref="NetSuite_Config" doc:description="Get List"  />
+		<ee:transform doc:name="Transform Message" doc:id="27f2e3cb-316c-4c74-8f7f-57d10da613b4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload map {
+	nsInternalId: $.internalId,
+	nsDivision: ($.customFieldList.customField groupBy $.scriptId).custentity17.value.name[0],
+	nsCompanyName: $.companyName,
+	nsTerms: $.terms.name,
+	nsHold: $.creditHoldOverride,
+	nsHoldReason: ($.customFieldList.customField groupBy $.scriptId).custentity20.value[0],
+	nsOverdueBalance: $.overdueBalance,
+	nsDaysOverdue: $.daysOverdue
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+	
+	</flow>
+	<flow name="getCustomersFlow" doc:id="be4eb036-b71f-4da5-8e8f-512e77f33d78" >
+		<ee:transform doc:name="Transform Message" doc:id="c92f19ec-d907-40e9-823f-004b4772534a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	basic: {
+		customFieldList: {
+			customField: [
+				{
+				scriptId: p('CustomerDivisionCustomField') as String,
+				operator: p('CustomerDivisionOperator') as String,  
+				searchValue: (p('CustomerDivisionInternalIds') splitBy(',')) map {
+					internalId: $
+			} as Object {class: "org.mule.module.netsuite.extension.api.ListOrRecordRef" }
+          } as Object {class: "org.mule.module.netsuite.extension.api.SearchMultiSelectCustomField"},
+          		{
+				scriptId: p('CustomerIntegrationStatusCustomField') as String,
+				operator: p('CustomerIntegrationStatusOperator') as String,
+				searchValue: (p('CustomerIntegrationStatusInternalIds') splitBy(',')) map {
+					internalId: $
+			} as Object {class: "org.mule.module.netsuite.extension.api.ListOrRecordRef" }
+          } as Object {class: "org.mule.module.netsuite.extension.api.SearchMultiSelectCustomField"}  ]
+		} as Object {class: "org.mule.module.netsuite.extension.api.SearchCustomFieldList"}
+	}
+} as Object {class: "org.mule.module.netsuite.extension.api.CustomerSearch"}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<netsuite:search key="CUSTOMER" pageSize="1000" doc:name="Search" doc:id="49efc86d-7775-443b-8ca0-a7749f856d35" config-ref="NetSuite_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="2e01ece1-ae85-461d-abe4-de8bc7649b40" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload map {
+	nsInternalId: $.internalId
+	}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="updateCustomerFlow" doc:id="ed47c096-6f59-4ef9-a779-b91fb081dd13" >
+		<ee:transform doc:name="Transform Message" doc:id="6449aea8-44fd-45ac-a791-5dd6efb0f156" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map {
+	internalId: $.internalId,
+	customFieldList: {
+		customField: [
+ ({
+			scriptId: "custentity27",
+			value: {
+				internalId: $.muleIntegrationStatusId
+			}  as Object {class: "org.mule.module.netsuite.extension.api.ListOrRecordRef"}
+		} as Object {class: "org.mule.module.netsuite.extension.api.SelectCustomFieldRef"}) if $.muleIntegrationStatusId?
+		 ]
+	} as Object {class: "org.mule.module.netsuite.extension.api.CustomFieldList"}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="fbe8c996-c700-4078-9a7d-5a3c01db0493" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload[0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<netsuite:update-record recordType="CUSTOMER" doc:name="Update record" doc:id="e944c253-4b71-4449-9110-09f8af065956" config-ref="NetSuite_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="456df007-8151-41f2-8fa3-b64833013f7f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	
+	
+	
+	
+</mule>

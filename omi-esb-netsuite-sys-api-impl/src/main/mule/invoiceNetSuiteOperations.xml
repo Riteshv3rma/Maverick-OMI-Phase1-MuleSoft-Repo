@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	
+	<flow name="getInvoiceByIdFlow" doc:id="f905e80c-4a92-4344-9316-163bc6b664f0" >
+		<ee:transform doc:name="Transform Message" doc:id="2d026b34-1c4f-4b58-8b0c-e0376cab5aec" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map ({
+	internalId: $.internalId,
+	"type": "INVOICE"
+} as Object {
+	class : "org.mule.module.netsuite.extension.api.RecordRef"
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<netsuite:get-list config-ref="NetSuite_Config" doc:description="Get List"  />
+		<ee:transform doc:name="Transform Message" doc:id="eeb0ce07-8295-44e8-8be0-d6d19d4a5442" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+fun exludeItems(itemList) = itemList splitBy(',')
+---
+payload map {
+	//nsCustomerName: $.entity.name,
+	nsCustomerId: $.entity.internalId,
+	nsInternalId: $.internalId,
+	nsTranDate: $.tranDate,
+	nsInvoiceNum: $.tranId,
+	nsTranNum: $.createdFrom.name,
+	nsDivision:  ($.customFieldList.customField groupBy $.scriptId).custbody12.value.name[0],
+	nsSubtotal: $.subTotal,
+	nsTransactionDiscount: $.discountTotal,
+	nsTax: $.taxTotal,
+	nsShippingCost: $.altShippingCost,
+	nsHandlingCost: $.altHandlingCost,
+	nsTotal: $.total,
+	nsAmountDue: $.amountRemainingTotalBox,
+	sfdcInvoiceId:  ($.customFieldList.customField groupBy $.scriptId).custbody14.value[0],
+	muleIntegrationStatus:  ($.customFieldList.customField groupBy $.scriptId).custbody15.value.name[0],
+	nsItems: $.itemList.item map {
+		nsItem: $.item.name,
+		nsItemInternalId: $.item.internalId,
+		nsLineId: $.line as Number,
+		nsQuantity: $.quantity,
+		nsUnits: $.units.name,
+		nsDescription: $.description,
+		nsUnitPrice: $.rate,
+		nsAmount: $.amount,
+		nsDepartment: $.department.name,
+		nsItemNo: ($.customFieldList.customField groupBy $.scriptId).custcol1.value[0]
+	} filter (not ((exludeItems(p('excludeItemList')) contains $.nsItemInternalId))),
+	nsStatus: $.status
+	
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+	</flow>
+	<flow name="getInvoicesFlow" doc:id="21cc247b-95d0-4fd5-ba35-6f21b56e2844">
+		<ee:transform doc:name="Transform Message"
+	doc:id="d36672fa-736a-4e73-a0d5-20d4dbda9da1">
+	<ee:message>
+		<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	basic: {
+		mainLine: {
+			searchValue: p('mainLineValue') as Boolean
+		},
+		"type" : {
+			operator: "ANY_OF",
+			searchValue: ["_invoice"]
+		},
+		customFieldList: {
+			customField: [
+				{
+				scriptId: p('divisionCustomField') as String,
+				operator: p('divisionOperator') as String,
+				searchValue: (p('divisionInternalIds') splitBy(',')) map {
+					internalId: $
+				}  as Object {class: "org.mule.module.netsuite.extension.api.ListOrRecordRef" }
+			} as Object {class: "org.mule.module.netsuite.extension.api.SearchMultiSelectCustomField"},
+          	{
+				scriptId: p('integrationStatusCustomField') as String,
+				operator: p('integrationStatusOperator') as String,
+				searchValue: (p('integrationStatusInternalIds') splitBy(',')) map {
+					internalId: $
+				}  as Object {class: "org.mule.module.netsuite.extension.api.ListOrRecordRef" }
+			} as Object {class: "org.mule.module.netsuite.extension.api.SearchMultiSelectCustomField"} ]
+		} as Object {class: "org.mule.module.netsuite.extension.api.SearchCustomFieldList"}
+	}
+} as Object {class: "org.mule.module.netsuite.extension.api.TransactionSearch"}]]></ee:set-payload>
+	</ee:message>
+</ee:transform>
+		<netsuite:search key="TRANSACTION" pageSize="1000" doc:name="NetSuite Search" doc:id="d7600195-9a7b-4f10-9d31-612a5dc641c3" config-ref="NetSuite_Config"/>
+		<ee:transform doc:name="Transform Message"
+			doc:id="4bb9b1b5-8498-4a18-9c58-510434239235">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload map {
+	nsCustomerName: $.entity.name,
+	nsInternalId: $.internalId,
+	nsTranDate: $.tranDate,
+	nsInvoiceNum: $.tranId,
+	nsTranNum: $.createdFrom,
+	nsDivision: $.customFieldList.customField[0].SelectCustomFieldRef__custbody12.name,
+	nsStatus: $.status
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+
+	</flow>
+	<flow name="updateInvoiceFlow" doc:id="31a5e46f-3e35-4f55-ae6b-9d420bd88b8d">
+		<ee:transform doc:name="Transform Message"
+			doc:id="3749fe1d-9c6c-4f3e-beb7-09f172f60286">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload map {
+	internalId: $.internalId,
+	customFieldList: {
+		customField: [
+ ({
+			scriptId: "custbody15",
+			value: {
+				internalId: $.muleIntegrationStatusId
+			}  as Object {class: "org.mule.module.netsuite.extension.api.ListOrRecordRef"}
+		} as Object {class: "org.mule.module.netsuite.extension.api.SelectCustomFieldRef"}) if $.muleIntegrationStatusId?,
+		
+		 ({
+			scriptId: "custbody14",
+			value: $.sfdcInvoiceId
+		} as Object {class: "org.mule.module.netsuite.extension.api.StringCustomFieldRef"}) if $.sfdcInvoiceId?
+		
+		 
+		 ]
+	} as Object {class: "org.mule.module.netsuite.extension.api.CustomFieldList"}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="9371a8a1-4e44-485c-89da-20fd1659852e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload[0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<netsuite:update-record recordType="INVOICE" doc:name="Update record" doc:id="d2549259-108e-4855-8939-08d4be45997c" config-ref="NetSuite_Config" />
+			<ee:transform doc:name="Transform Message" doc:id="b8686d52-f14d-4b50-9f56-6f2ab05d7b93">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="0423e05f-4b7c-4a94-b693-435aca038b37" message="payload after marking Invoice as Processed=  #[payload] " />
+	
+</flow>
+	<flow name="getDeletedInvoicesFlow" doc:id="e4946fa8-3a6a-4008-a16b-e215ad8fcb4b" >
+	<netsuite:get-deleted-records recordType="INVOICE" doc:name="Get deleted records" doc:id="3a5f0a27-8f7b-439a-b348-1e74615109ea" config-ref="NetSuite_Config">
+			<reconnect-forever />
+			<netsuite:deleted-date operator="AFTER" searchValue='#[vars.lastDeletedDate  as LocalDateTime {class: "java.time.LocalDateTime"}]' />
+		</netsuite:get-deleted-records>
+		<ee:transform doc:name="Transform Message" doc:id="41593713-91da-44af-94f7-ce88c7995498" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	
+</flow>
+</mule>

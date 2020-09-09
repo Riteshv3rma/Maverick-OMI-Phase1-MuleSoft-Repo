@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd">
+	
+<flow name="updateSalesOrderInSfdcFlow" doc:id="56b794e7-0bc3-4375-85b1-2fb09fba8b2d" >
+<http:request method="PUT" doc:name="Request" doc:id="c7f2d96d-657b-4ccf-b261-4bf1ac25cad2" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/salesorders">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+		
+</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="63a6d86d-4394-44f1-8bf8-8800d035d1ac" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getSalesOrderInSfdcByNSIdFlow" doc:id="44ec4c92-4e8d-4cc2-a9c2-bd94d5bd2b6a" >
+	<http:request method="GET" doc:name="Request" doc:id="218eecdb-f77a-4a82-9492-392ac0943415" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/salesorders/{salesorderId}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"salesorderId" : payload.internalId
+}]]]></http:uri-params>
+
+
+		
+</http:request>
+	
+</flow>
+	<flow name="getSalesOrderInSfdcByStatusFlow" doc:id="cb63f670-73df-4a22-bbe7-8894eba5aaca" >
+		<http:request method="GET" doc:name="Request" doc:id="1796a087-68dc-4aff-bf22-457fab4ba3fe" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/salesorders"/>
+	</flow>
+</mule>

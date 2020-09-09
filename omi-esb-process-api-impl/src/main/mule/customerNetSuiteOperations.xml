@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	
+	<flow name="getCustomerByIdFlow" >
+	
+		<http:request method="POST" doc:name="Request" doc:id="caffa466-53dd-4440-aa04-3d51a009fa95" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/customers">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="cb3f5b42-07c2-420b-a6c7-2e1fe19f22f4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+	
+	
+</flow>
+	<flow name="getCustomersFlow" doc:id="be4eb036-b71f-4da5-8e8f-512e77f33d78" >
+		<http:request method="GET" doc:name="Request" doc:id="91402d57-787f-47f9-8ae5-0f2397165855" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/customers"/>
+	</flow>
+	<flow name="updateCustomerFlow" doc:id="ed47c096-6f59-4ef9-a779-b91fb081dd13" >
+			<ee:transform doc:name="Transform Message" doc:id="cc7dc810-5f37-44ab-b0b8-81ece4c8880c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="PATCH" doc:name="Request" doc:id="a34f75cf-e864-4500-a05e-2d076eb9800a" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/customers/{internalId}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"internalId" : vars.internalId
+}]]]></http:uri-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="f488a927-39ba-4958-b54a-18e54197f3c3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	
+	
+	
+	
+</mule>

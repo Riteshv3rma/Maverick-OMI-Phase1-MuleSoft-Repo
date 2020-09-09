@@ -1,0 +1,30 @@
+#%RAML 1.0
+title: OMI ESB Process API
+version: v1.0
+baseUri: http://localhost:8081/api
+                            
+/samples:
+  description: |
+    Working with samples:
+    * Retrieving all samples
+    * Creating samples
+  get:
+    displayName: Get samples
+    description: |
+      Retrieve all the Invoices according to the filtering.   
+    responses:
+      200:
+        body:
+          application/json:
+          
+  post:
+    displayName: Create sample
+    description: |
+      Create a new sample
+    body:
+      application/json:
+    responses:
+      201:
+        description: Created
+        body:
+          application/json:

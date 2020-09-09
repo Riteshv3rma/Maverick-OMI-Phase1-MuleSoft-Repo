@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="reprocess-salesorder-sfdc-to-netsuiteFlow" doc:id="affdab43-94d6-482e-9dbe-2ba5d7f252ac" >
+		<scheduler doc:name="Scheduler" doc:id="91af7f26-fdec-4be5-b390-5ab547f95527" >
+			<scheduling-strategy >
+				<cron expression="${reprocess.samples.sfdc.netsuite.cron}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="getSalesOrderInSfdcByStatusFlow" doc:id="a5891608-4131-4568-b966-5b619198b54d" name="getSalesOrderInSfdcByStatusFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="a50d9c57-5bf5-40fd-88b3-80c461fce545" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/json 
+fun dasherizeAndUpper(country) = upper(underscore(country))
+fun addNotesInItems(itemList, notes) = [{
+	"Product_Name_Sync__c" : "description",
+	"description" : notes,
+	"Item_No__c": "description",
+	"Product_External_Id__c": "-3"
+	
+} ] ++ itemList as Array
+---
+payload map {
+	"id": $.Id,
+	"brand": $.Brand__c,
+	"division": $.Division__c,
+	"poNumber": $.PO_Num__c,
+	"salesRepId": $.SalesRep_External_Id__c,
+	"notes": $.Notes__c,
+	"productList": (if ( $.Notes__c != null) addNotesInItems($.Products__r, $.Notes__c) else $.Products__r) map {
+		"productName": $.Product_Name_Sync__c,
+		"productId": $.Item_No__c,
+		"quantity": $.Quantity__c,
+		"internalId": $.Product_External_Id__c,
+		"description": $.description
+	},
+	"address": {
+		"zip": $.Zip__c,
+		"country": dasherizeAndUpper($.Country__c),
+		"addr2": $.Address_2__c,
+		"city": $.City__c,
+		"addr1": $.Account_Address__c,
+		"addr3": null,
+		"addrPhone": $.Contact_Phone__c,
+		"addressee": $.Company_Name__c,
+		"attention": $.Attention_To__c,
+		"state": $.State__c
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="5846d461-6eff-461f-8fc5-8c78a57c15e4">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="retrySalesTransactionStatus"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	total: payload.*id,
+	success: [],
+	fail: []
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="4c3161a2-794b-4251-889f-abb302edc84e" message="eligible salesOrder to be reprocessed = #[payload.*id]"/>
+		<foreach doc:name="For Each" doc:id="6e171f55-b282-46b2-9598-d1cc072701a7" >
+			<ee:transform doc:name="Transform Message" doc:id="cb6b96d1-ddc0-44e5-8d0b-2eddb90d71b7" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[payload]]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="salesorder-sfdc-to-netsuiteFlow" name="salesorder-sfdc-to-netsuiteFlow"/>
+		</foreach>
+		<choice doc:name="Choice" doc:id="371f703d-1676-4b4d-9770-c9740f5008c9" >
+			<when expression="#[sizeOf(vars.retrySalesTransactionStatus.fail) &gt; 0]">
+				<ee:transform doc:name="Transform Message" doc:id="9f1097f1-0642-4e82-969c-2cbc3a713283" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"emailBody": p('secure::samples.body') ++ write(vars.retrySalesTransactionStatus.fail,'application/json'),
+	"subject": upper(p('mule.env')) ++ ": " ++ p('secure::samples.subject'),
+	"toEmails": p('secure::samples.to.emailList')
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="send-email-notificationFlow" doc:id="51518b61-8ad5-4469-a465-b849255889b3" name="send-email-notificationFlow"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="9b3c2ae8-1e15-4780-8522-846c4151fe63" message="All the errored SalesOrders have been processed successfully."/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="8a289af8-ddde-4f95-bd97-919542a2d93c" type="ANY">
+				<logger level="ERROR" doc:name="Logger" doc:id="f5482601-90ad-4d0c-9a2b-a3c085112ccd" message="Error while reprocessing salesorders."/>
+				<ee:transform doc:name="Transform Message" doc:id="b40177a0-db0b-48c0-b82a-1fc12818993d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"emailBody": p('secure::samples.body') ++ ": " ++ error.description,
+	"subject": upper(p('mule.env')) ++ ": " ++ p('secure::samples.subject'),
+	"toEmails": p('secure::samples.to.emailList')
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="send-email-notificationFlow" doc:id="1f3612bb-a4cd-4619-85da-877438002c6c" name="send-email-notificationFlow"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

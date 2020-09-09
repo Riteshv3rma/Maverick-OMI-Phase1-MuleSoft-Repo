@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd 
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	
+	<flow name="delete-invoice-netsuite-to-sfdcFlow" doc:id="1c4e9782-4b0c-451f-b06f-8b3b458daa4d">
+		<scheduler doc:name="Scheduler" doc:id="2137d637-27c7-4b84-9c88-68c7925ad60c" >
+			<scheduling-strategy >
+				<cron expression="${delete.invoice.netsuite.sfdc.cron}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="#[(((now() &gt;&gt; p('timeZone')) as String) splitBy('.'))[0]]" doc:name="Set newLastDeletedDate" doc:id="8ca39fe9-bc10-48dd-8acf-0ee777cd3db8" variableName="newLastDeletedDate" />
+		<os:retrieve key="watermark" objectStore="watermarkStore"
+			target="lastDeletedDate" doc:name="Retrieve lastDeletedDate">
+			<os:default-value><![CDATA[#[read(p('watermark.defaultDeletedDate.expression'))]]]></os:default-value>
+		</os:retrieve>
+		<flow-ref doc:name="getDeletedInvoicesFlow" doc:id="3a972527-c0e5-40af-8549-ee586999dacd" name="getDeletedInvoicesFlow"/>
+		<validation:is-true doc:name="Is returned payload successful?" doc:id="8b0d6133-231d-4457-bcfc-d1250d1828ac" expression="#[payload.status.isSuccess]" message="Error while getting deleted records on #[vars.lastDeletedDate] ."/>
+		<ee:transform doc:name="Transform Message" doc:id="2ae737cc-a8b7-4334-95a3-81818511d667" >
+			<ee:message >
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.deletedRecordList.deletedRecord]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="3d5a3b03-f244-4c61-bbbb-ac216e18a55e" >
+			<when expression="#[sizeOf(payload) == 0]">
+				<logger level="INFO" doc:name="Logger" doc:id="b574e6c8-3595-4435-8627-aa8c808035de" message="deleted Invoice Records after #[vars.lastDeletedDate] is 0. "/>
+					<os:store key="watermark" failOnNullValue="false" objectStore="watermarkStore" doc:name="Store lastDeletedDate">
+			<os:value><![CDATA[#[vars.newLastDeletedDate]]]></os:value>
+		</os:store>
+			
+</when>
+			<otherwise >
+						<ee:transform doc:name="Transform Message" doc:id="7dce3532-8fcd-4a01-8ef8-ff26095f6b7c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+(payload filter  ($.record."type" == "INVOICE")) map {
+	internalId: $.record.internalId
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="c1c285de-0d29-4d1c-a1b6-1d09419e5b63" message="deleted Invoices in NetSuite after #[vars.lastDeletedDate] = #[payload]"/>
+		<ee:transform doc:name="Set delInvoiceTransactionStats" doc:id="01aa47ae-ac33-4912-8ed6-0e00b5ee9892" doc:description="Set delInvoiceTransactionStats">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="delInvoiceTransactionStats"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	total: payload.*internalId,
+	success: [],
+	fail: []
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="85ddd46d-8030-4c2d-bf8b-4179135925e0" >
+					<flow-ref doc:name="deleteForEachInvoiceFlow" doc:id="97fb7825-4f77-428d-a333-6a50e143ed45" name="deleteForEachInvoiceFlow" />
+				</foreach>
+						<choice>
+<when expression="#[sizeOf(vars.delInvoiceTransactionStats.fail) &gt; 0]">
+				<logger level="INFO" doc:name="Logger" doc:id="e9a78b9a-603d-4b7f-bdbd-2823757cec1f" message="Errored Deleted Invoice InternalIds = #[vars.delInvoiceTransactionStats.fail]"/>
+				<ee:transform doc:name="Transform Message" doc:id="88a6d3a5-05bf-42fb-8176-30bcab6d1ae6">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"emailBody": p('secure::del.invoice.body') ++ write(vars.delInvoiceTransactionStats.fail,'application/json'),
+	"subject": upper(p('mule.env')) ++ ": " ++ p('secure::del.invoice.subject'),
+	"toEmails": p('secure::del.invoice.to.emailList')
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="send-email-notificationFlow" doc:id="12b5bc38-552e-4e46-97db-b19a0d5f9b37" name="send-email-notificationFlow"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Deleted invoice NetSuite to SFDC Migration process has been finished" doc:id="88a193a4-1ca0-40b1-8713-cd2e307f574f" message="Deleted invoice NetSuite to SFDC Migration process has been finished"/>
+						<os:store key="watermark" failOnNullValue="false" objectStore="watermarkStore" doc:name="Store lastDeletedDate">
+			<os:value><![CDATA[#[vars.newLastDeletedDate]]]></os:value>
+		</os:store>
+			
+</otherwise>
+		</choice>	
+				</otherwise>
+		</choice>
+
+		
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="90db0c94-f65f-49ca-aacc-28a4a5039c26" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="9251d8a4-dba9-4b73-849a-b5c2edea5525">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"emailBody": p('secure::del.invoice.body') ++ ": " ++ error.description,
+	"subject": upper(p('mule.env')) ++ ": " ++ p('secure::del.invoice.subject'),
+	"toEmails": p('secure::del.invoice.to.emailList')
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="send-email-notificationFlow" doc:id="fb00b52e-4ea3-425b-b1c3-b5b7f717969a" name="send-email-notificationFlow"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="deleteForEachInvoiceFlow" >
+			<set-variable value="#[payload.internalId]" doc:name="Set internalId" doc:id="c0ae96ae-ec03-4113-92f3-538c549a9a07" variableName="internalId"/>
+			<flow-ref doc:name="deleteSfdcInvoiceItemFlow" doc:id="0538d240-d7fd-4641-bc3a-65cf57fd4e5e" name="deleteSfdcInvoiceItemFlow"/>
+			<remove-variable doc:name="Remove internalId" doc:id="03a4fed5-18f6-4fdc-82f8-fc6c2f6faaad" variableName="internalId"/>
+		<error-handler>
+<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1050c948-c0ad-4e36-9b5f-4f012e2cb2c8" type="ANY">
+								<set-variable value="#[error.description]" doc:name="Set errorDescription" doc:id="ad90ea8c-a190-4481-91ff-5db52e1deab7" variableName="errorDescription"/>
+										<ee:transform doc:id="100a7fde-6250-480c-a29e-477c35e4fc49">
+									<ee:variables>
+										<ee:set-variable variableName="delInvoiceTransactionStats"><![CDATA[%dw 2.0
+output application/json
+---
+{
+total: vars.delInvoiceTransactionStats.total,
+success: vars.delInvoiceTransactionStats.success,
+fail: vars.delInvoiceTransactionStats.fail as Array ++ [{ id: vars.internalId,
+	errorMessage: vars.errorDescription
+}]
+
+}]]></ee:set-variable>
+									</ee:variables>
+								</ee:transform>
+					</on-error-continue>
+				</error-handler>
+		
+	</flow>
+	
+	</mule>

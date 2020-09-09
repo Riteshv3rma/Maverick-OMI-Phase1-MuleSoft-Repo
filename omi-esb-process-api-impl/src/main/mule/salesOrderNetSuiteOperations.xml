@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd">
+	<flow name="getSalesOrderByIdFlow" doc:id="20b45cf3-fe4e-4ab1-98ec-dae9318d504b" >
+	
+	<http:request method="GET" doc:name="Request" doc:id="58212af2-f641-407b-b787-dc5a31ee0285" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/salesorder/{internalId}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"internalId" : vars.internalId
+}]]]></http:uri-params>
+
+		</http:request>
+	</flow>
+	<flow name="createSalesOrderFlow" doc:id="35542af6-cd3f-4b13-83f3-b25a77852174" >
+		<http:request method="POST" doc:name="Request" doc:id="3ee5bb0c-2d60-4408-85c7-c273901aa3a0" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/salesorder">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+
+
+
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="0d904ebc-c73e-4e26-8e8c-bf5974041ee3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getSalesOrderFlow">
+	<http:request method="GET" doc:name="Request" doc:id="50779bda-7831-4a67-9f24-520042e55792" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/salesorder">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"lastModifiedDate" : vars.lastModDate
+}]]]></http:query-params>
+
+		</http:request>
+	
+	</flow>
+</mule>

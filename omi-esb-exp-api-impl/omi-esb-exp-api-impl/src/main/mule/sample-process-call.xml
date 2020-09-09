@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	
+	<flow name="sample-process-callFlow" doc:id="3b3ceb14-33df-4844-bbd4-0b551672dd55" >
+		<ee:transform doc:name="Transform Message" doc:id="bfd86fb9-3527-4f22-91c0-9f4eddd3e74a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<vm:publish doc:name="Publish" doc:id="fde1953f-ab43-4430-af09-2cd897734a93" config-ref="VM_Config" queueName="sample-process-queue"/>
+		<ee:transform doc:name="Transform Message" doc:id="bf713d9c-dcd4-4982-a02a-064ed6c7c5e3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status":"SUCCESS"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="sample-process-vmFlow" doc:id="e59f41e1-1f36-4149-be2e-ad29d37a50d2" >
+		<vm:listener queueName="sample-process-queue" doc:name="Listener" doc:id="8c89d66f-877c-4b8a-b63f-5145ddf86d79" config-ref="VM_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="34d14cf4-0819-4636-b7a4-5bb41d0e178d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="1b26241f-4f06-4c24-bf02-f24b157c0929" message="payload in sample experience api call = #[payload]"/>
+		<http:request method="POST" doc:name="Request" doc:id="fb879c32-3d4b-4512-9de3-44c5f12972ae" config-ref="HTTP_Process_Request_configuration" path="/samples">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="c651baf1-8d4c-498f-a310-58c2141857c7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="5c5bbfbe-0594-4acd-ac5e-ac898943387c" message="response after sending payload to sample process API = #[payload]"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="3d1103d7-1b47-4754-a538-2c87ed240e06" type="ANY">
+				<logger level="ERROR" doc:name="Logger" doc:id="9fe4c882-f1bb-4c1c-935b-6416e53c263d" message="Sample Process VM call error = #[error.description]"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

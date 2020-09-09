@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<flow name="terms-netsuite-to-sfdcFlow" doc:id="6c333be3-9a83-4b60-9be7-16e545cd2cc1" >
+		<scheduler doc:name="Scheduler" doc:id="d2e14688-b46b-4f21-a6a6-775f6197e752" >
+			<scheduling-strategy >
+				<cron expression="${terms.netsuite.sfdc.cron}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="getCustomersFlow" doc:id="a21d86cc-482c-4d5d-a2f7-f9dbc861e998" name="getCustomersFlow" target="getCustomerResponse" targetValue="#[payload]"/>
+		<ee:transform doc:name="Set customerTransactionStats" doc:id="5c3f202b-d4ac-4a55-832c-442101dc24e4" doc:description="Set customerTransactionStats">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="customerTransactionStats"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	total: vars.getCustomerResponse.*nsInternalId,
+	success: [],
+	fail: []
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Is getCustomerResponse empty?" doc:id="f955cbd1-eb51-45b5-88d1-02ee5bcfec04" >
+			<when expression="#[sizeOf(vars.getCustomerResponse) == 0]">
+				<logger level="DEBUG" doc:name="Logger" doc:id="340b17a0-4bc1-4910-9f16-93171b1892f1" message="eligible terms to be updated = #[vars.getCustomerResponse]"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="091cda62-ab41-4986-a55c-bd8d1203d1de" message="eligible terms to be updated = #[vars.getCustomerResponse]"/>
+				<ee:transform doc:name="Transform Message" doc:id="d7f432b6-73b1-4ebb-9275-971b5f8e0a0f">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.getCustomerResponse.*nsInternalId map {
+	internalId: $
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="getCustomerByIdFlow" doc:id="3778cf4b-f31a-45d7-8ad1-c72fa2a2754e" name="getCustomerByIdFlow"/>
+		<foreach doc:name="For Each" doc:id="a0aaff9c-350f-44a8-a7f5-01570aff5e9b" >
+		<flow-ref name="foreachTermsSyncFlow" doc:name="foreachTermsSyncFlow" />
+									</foreach>
+					
+			
+</otherwise>
+		</choice>
+		<logger level="DEBUG" doc:name="Logger" doc:id="2ad0f565-ffb7-4fad-8333-18055bd9601b" message="customerTransactionStats = #[vars.customerTransactionStats]" />
+				<choice doc:name="Choice" doc:id="82d29c00-d82b-4c9b-8851-9035853ba517" >
+			<when expression="#[sizeOf(vars.customerTransactionStats.fail) &gt; 0]">
+				<logger level="INFO" doc:name="Logger" doc:id="07d0f9a6-7c1b-4f5d-b375-9f1be4ade6c0" message="Errored Customer InternalIds = #[vars.customerTransactionStats.fail]"/>
+				<ee:transform doc:name="Transform Message" doc:id="28db9f33-6bb5-48ff-919e-281371dc768f">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"emailBody": p('secure::terms.body') ++ write(vars.customerTransactionStats.fail,'application/json'),
+	"subject": upper(p('mule.env')) ++ ": " ++ p('secure::terms.subject'),
+	"toEmails": p('secure::terms.to.emailList')
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="send-email-notificationFlow" doc:id="8c0042f8-819f-4704-872a-b0bb9bf23905" name="send-email-notificationFlow"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Terms NetSuite to SFDC Migration process has been finished" doc:id="1e0815fc-52e1-40fc-87fe-4702edc08c6b" message="Terms NetSuite to SFDC Migration process has been finished"/>
+			</otherwise>
+		</choice>
+		
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2e969549-f937-4366-a868-2fc7798db9ea" type="ANY">
+				<logger level="ERROR" doc:name="Logger" doc:id="9ec31769-cd2f-4581-80df-03af2d218cba" message="#[error.description]"/>
+			<ee:transform doc:name="Transform Message" doc:id="f185258d-2a91-4ca2-9833-af8f7fa7a8aa">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"emailBody": p('secure::terms.body') ++ ": " ++ error.description ,
+	"subject": upper(p('mule.env')) ++ ": " ++ p('secure::terms.subject'),
+	"toEmails": p('secure::terms.to.emailList')
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="send-email-notificationFlow" doc:id="6c8dafe8-8391-4df8-bccc-cffbeafcd061" name="send-email-notificationFlow"/>
+			
+			</on-error-continue>
+		</error-handler>
+			</flow>
+			
+			<flow name="foreachTermsSyncFlow">
+			<set-variable value="#[payload.nsInternalId]" doc:name="Set internalId" doc:id="cc6b03ea-f45e-46ff-8dc1-d5186ac8b671" variableName="internalId"/>
+					<validation:is-true doc:name="Is internalId not null ?" doc:id="5bd64d04-02d1-4156-8533-3b01f4a2f53c" expression="#[vars.internalId != null]" message="Customer data validation failed."/>
+					<ee:transform doc:name="Transform Message" doc:id="0f406ea6-113f-4bd4-b138-65e2faa6365b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[ {
+	Internal_ID__c: payload.nsInternalId,
+	Division__c: payload.nsDivision,
+	Name: payload.nsCompanyName,
+	Terms__c: payload.nsTerms,
+	Hold__c: payload.nsHold,
+	On_Hold_Reason__c: payload.nsHoldReason,
+	Overdue_Balance__c: payload.nsOverdueBalance,
+	Days_Overdue__c: payload.nsDaysOverdue
+}]
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	<flow-ref name="upsertCustomerFlow" doc:name="upsertCustomerFlow" target="upsertCustomerResult" targetValue="#[payload]"/>
+	<validation:is-false doc:name="Is customer successfully upserted in SFDC?" doc:id="0ec9df7e-d9b1-4cba-977d-04275031163e" expression="#[vars.upsertCustomerResult.*success contains false]" message="Error while upserting Customer in SFDC."/>
+					<ee:transform doc:name="Transform Message" doc:id="80dbb2c8-6ccf-4d7d-b4c7-0d1e84c85bd5" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	"internalId": vars.internalId,
+	"muleIntegrationStatusId": "3"
+}]
+]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<flow-ref doc:name="updateCustomerFlow" doc:id="53283970-9058-49e7-935d-2b90d23b068c" name="updateCustomerFlow"/>
+				<validation:is-true doc:name="Is Customer marked processed in NetSuite?" doc:id="9ccbeef4-5c24-43c1-90bb-2b44830d36b0" expression="#[payload.status.isSuccess]" message="updateCustomer operation has been failed."/>
+					<ee:transform doc:name="Set successful data in customerTransactionStats" doc:id="fdc38cc5-fdbc-43c1-bdf2-aa6ff3e91d1a" doc:description="Set successful data in customerTransactionStats">
+							<ee:message >
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="customerTransactionStats" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+total: vars.customerTransactionStats.total,
+success: vars.customerTransactionStats.success as Array ++ [ vars.internalId ],
+fail: vars.customerTransactionStats.fail
+
+}]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+			<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b0bab4ad-2734-4d0a-9da3-a14c734b8606" type="ANY">
+						<logger level="ERROR" doc:name="Logger" doc:id="e8d994e4-1faf-4390-bf48-9abfcb9fb561" message="#[Error while upserting Terms data]"/>
+								<set-variable value="#[error.description]" doc:name="Set errorDescription" doc:id="25e2adea-b584-48d1-a981-c97a277378ac" variableName="errorDescription"/>
+					<ee:transform doc:name="create payload to mark Invoice as Error in NetSuite" doc:id="ac289e58-7f43-490e-b0ac-af0a82dd30d7" doc:description="create payload to mark Invoice as Error in NetSuite" >
+									<ee:message >
+										<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	"internalId": vars.internalId,
+	"muleIntegrationStatusId": "1"
+}]]]></ee:set-payload>
+									</ee:message>
+								</ee:transform>
+								<flow-ref doc:name="updateCustomerFlow" doc:id="8cb61731-f36e-4131-a3ad-92ae84889910" name="updateCustomerFlow"/>
+					<ee:transform doc:name="Set failed data in customerTransactionStats" doc:id="7f5a810f-123d-4531-b4a1-c5223356b198" doc:description="Set failed data in customerTransactionStats">
+									<ee:message>
+									</ee:message>
+									<ee:variables>
+										<ee:set-variable variableName="customerTransactionStats"><![CDATA[%dw 2.0
+output application/json
+---
+{
+total: vars.customerTransactionStats.total,
+success: vars.customerTransactionStats.success,
+fail: vars.customerTransactionStats.fail as Array ++ [{ id: vars.internalId,
+	errorMessage: vars.errorDescription
+}]
+
+}]]></ee:set-variable>
+									</ee:variables>
+								</ee:transform>
+					</on-error-continue>
+				</error-handler>
+			
+			</flow>
+</mule>

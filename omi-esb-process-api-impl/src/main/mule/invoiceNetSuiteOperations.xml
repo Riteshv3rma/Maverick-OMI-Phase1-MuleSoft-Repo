@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	
+	<flow name="getInvoiceByIdFlow" doc:id="f905e80c-4a92-4344-9316-163bc6b664f0" >
+		<ee:transform doc:name="Transform Message" doc:id="94a9ed74-631b-4215-888a-fde03c89acfd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Request" doc:id="bf5f5cd0-72a3-459f-a0dd-d4ae5eb7a718" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/invoices">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="df16e1c0-5b76-4ca3-b7e9-42aac164f715" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+	
+</flow>
+	<flow name="getInvoicesFlow" doc:id="21cc247b-95d0-4fd5-ba35-6f21b56e2844">
+		<http:request method="GET" doc:name="Request" doc:id="11463179-6a25-436a-98b1-7be4427baaef" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/invoices"/>
+
+	
+</flow>
+	<flow name="updateInvoiceFlow" doc:id="31a5e46f-3e35-4f55-ae6b-9d420bd88b8d">
+		<ee:transform doc:name="Transform Message" doc:id="bcc7655e-894b-4c1c-b832-b45665f05895" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="PATCH" doc:name="Request" doc:id="5ae0262e-aecd-44a0-8013-c9931f0840f7" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/invoices/{internalId}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"internalId" : vars.internalId
+}]]]></http:uri-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="599a5ac5-6292-4d4b-9152-b583f41ac290" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	
+</flow>
+	<flow name="getDeletedInvoicesFlow" doc:id="e4946fa8-3a6a-4008-a16b-e215ad8fcb4b" >
+	<http:request method="GET" doc:name="Request" doc:id="e3e42d21-b70f-4c5b-9750-eeaa9c9865d7" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/invoices">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"deleted" : true,
+	"lastDeletedDate" : vars.lastDeletedDate
+}]]]></http:query-params>
+
+	</http:request>
+	
+</flow>
+</mule>

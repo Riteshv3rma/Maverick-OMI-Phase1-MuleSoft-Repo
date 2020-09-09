@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd 
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	
+	<flow name="invoice-netsuite-to-sfdcFlow" doc:id="379675ce-4054-4256-87a1-13f07b4f5cf6">
+		<scheduler doc:name="Scheduler" doc:id="2648989e-60ed-42ed-aad9-739b2ae9a443" >
+			<scheduling-strategy >
+				<cron expression="${invoice.netsuite.sfdc.cron}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="getInvoicesFlow" doc:id="6c8a0440-5649-48c3-91cb-7658239850ff" name="getInvoicesFlow" target="getInvoiceResult" targetValue="#[payload]"/>
+		<ee:transform doc:name="Set transactionStats" doc:id="d52ad138-b438-4925-98a3-1c2fcc9dd719" doc:description="Set transactionStats">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="transactionStats"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	total: vars.getInvoiceResult.*nsInternalId,
+	success: [],
+	fail: []
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Is any Invoice Eligible?" doc:id="ed2d3003-0e59-47ce-b6f3-771092f91a15" >
+			<when expression="#[sizeOf(vars.getInvoiceResult) == 0]">
+				<logger level="INFO" doc:name="Logger" doc:id="3ed9ec1e-0c24-4c2c-8418-e1897f2267ea" message="eligible Invoices to be synced with SFDC= #[vars.getInvoiceResult.*nsInternalId]"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="1d7a7e00-0c33-47ba-958f-023cda6d2398" message="eligible Invoices to be synced with SFDC= #[vars.getInvoiceResult.*nsInternalId]" />
+			<ee:transform doc:name="Set List of InternalIds" doc:id="3c2067fd-3aff-4bec-993a-9966ca6e274f" doc:description="Set List of InternalIds">
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+vars.getInvoiceResult map {
+	internalId:$.nsInternalId
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<flow-ref doc:name="getInvoiceByIdFlow" doc:id="b3317cfb-c90d-4893-8eac-e56626eea00b" name="getInvoiceByIdFlow"/>
+		<foreach doc:name="For Each" doc:id="9166d18a-a3bf-4799-8f02-7c9fe21ed579" >
+			<set-variable value="#[payload.nsInternalId]" doc:name="Set internalId" doc:id="e9f83843-05f9-4c95-9ece-587f010afc3c" variableName="internalId" />
+			<set-variable value="#[payload.nsInvoiceNum]" doc:name="Set invoiceNum" doc:id="2824f907-a543-4bb2-9e08-99aabced0a7d" variableName="invoiceNum"/>
+					<flow-ref name="foreachInvoiceSyncFlow" doc:name="foreachInvoiceSyncFlow" />								
+		</foreach>
+		<logger level="INFO" doc:name="Logger" doc:id="6ca78002-bd64-4921-aa4b-d10d5286e691" message="transactionStats = #[vars.transactionStats]" />
+				<choice doc:name="Choice" doc:id="75b38469-d444-4ac0-9a8c-e529bc3614f5">
+					<when expression="#[sizeOf(vars.transactionStats.fail) &gt; 0]">
+				<logger level="INFO" doc:name="Logger" doc:id="712f264d-874c-405f-b85b-f9e32aec0839" message="Errored Invoice InternalIds = #[vars.transactionStats.fail]"/>
+				<ee:transform doc:name="Transform Message" doc:id="32a761f1-943f-4bb5-b422-ad8a073bac27">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"emailBody": p('secure::invoice.body') ++ write(vars.transactionStats.fail,'application/json'),
+	"subject": upper(p('mule.env')) ++ ": " ++ p('secure::invoice.subject'),
+	"toEmails": p('secure::invoice.to.emailList')
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="send-email-notificationFlow" doc:id="2ff18e96-2f4e-412e-a8aa-d1447084f85f" name="send-email-notificationFlow"/>
+			</when>
+					<otherwise >
+						<logger level="INFO" doc:name="Invoice NetSuite to SFDC Migration process has been finished!" doc:id="7a84ac17-911e-4dda-9a22-62070aa1459b" message="Invoice NetSuite to SFDC Migration process has been finished" />
+					</otherwise>
+				</choice>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2b3943ac-a541-4089-91e1-e85ae2074c1f" >
+				<ee:transform doc:name="Transform Message" doc:id="b9e7c7b4-fbd3-4ed4-a594-d29dc88d702d">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"emailBody": p('secure::invoice.body') ++ ": " ++ error.description,
+	"subject": upper(p('mule.env')) ++ ": " ++ p('secure::invoice.subject'),
+	"toEmails": p('secure::invoice.to.emailList')
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="send-email-notificationFlow" doc:id="6a66580a-370d-48fc-a49c-7a52c3fc1bae" name="send-email-notificationFlow"/>
+
+			</on-error-continue>
+		</error-handler>
+		
+	
+	</flow>
+<flow name="foreachInvoiceSyncFlow" >
+					<ee:transform doc:name="Set dataValidation variable" doc:id="43447263-a35c-450f-b3aa-6fc90cb0bf8d" doc:description="Set dataValidation variable">
+							<ee:message >
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="dataValidation" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload.nsInternalId != null) and 
+(payload.nsCustomerId != null) and 
+(payload.nsInvoiceNum != null)
+]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<validation:is-true doc:name="Is dataValidation passed?" doc:id="d094a521-3886-4971-bb06-045ab8f2eed5" message="Either customerId or internalId is null in invoice" expression="#[vars.dataValidation]"/>
+						<ee:transform doc:name="Transform Message" doc:id="8c9ee24d-076b-4811-836f-c83ab910b35d" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[ payload ]]]></ee:set-payload>
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="itemPayload" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.nsItems
+]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<flow-ref doc:name="upsertInvoiceSub_Flow" doc:id="c2d40ca5-8f8e-4b40-bf43-961dd1e1b370" name="upsertInvoiceSub_Flow" target="upsertInvoiceResult" targetValue="#[payload]"/>
+					<logger level="INFO" doc:name="Logger" doc:id="20b19edc-fe60-4190-ace6-1e5c0345aec8" message="payload after upserting invoice in SFDC=  #[vars.upsertInvoiceResult] " />
+						<validation:is-false doc:name="Is invoice successfully upserted in SFDC?" doc:id="98ff55eb-aa31-46f0-87ea-0490f13c0c0f" expression="#[vars.upsertInvoiceResult.*success contains false]" message="Error while upserting invoice in SFDC."/>
+						<set-variable value="#[vars.upsertInvoiceResult[0].id]" doc:name="Set sfdcInvoiceId" doc:id="86b8d1e5-60a9-4897-b5d6-39c6f6e58a1d" variableName="sfdcInvoiceId"/>
+						<flow-ref doc:name="getSfdcItemsByInvoiceIdFlow" doc:id="dc1437fc-52a4-4c06-93e9-5c3f0e10e134" name="getSfdcItemsByInvoiceIdFlow" target="getSfdcItemByInvoiceIdResponse" targetValue="#[payload]"/>
+				<choice doc:name="Choice" doc:id="eed5a61b-929d-4dc9-8b23-f98d58f93076" >
+			<when expression="#[sizeOf(vars.getSfdcItemByInvoiceIdResponse) == 0]">
+				<logger level="INFO" doc:name="Logger" doc:id="49670f5f-8cb7-4eec-bea4-2ce14c9b3cb6" message="Invoice creation scenario. No items found in SFDC."/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Set sfdcResponseGroupByLineId" doc:id="49b581f5-c1f3-4ff0-bea4-832876ea6710" doc:description="Set sfdcResponseGroupByLineId">
+				<ee:message>
+				</ee:message>
+							<ee:variables>
+								<ee:set-variable variableName="sfdcResponseGroupByLineId"><![CDATA[%dw 2.0
+output application/json
+---
+vars.getSfdcItemByInvoiceIdResponse groupBy ($.Line_Id__c as Number)]]></ee:set-variable>
+							</ee:variables>
+				</ee:transform>
+			</otherwise>
+		</choice>
+						<ee:transform doc:name="Set itemPayload" doc:id="a3da4261-b57b-47e3-9ab6-59cdcd8ab694" doc:description="Set itemPayload">
+									<ee:message>
+										<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+fun showData(data, id) = data[id]
+---
+vars.itemPayload map {
+	(Id: showData(vars.sfdcResponseGroupByLineId, ($.nsLineId as String))[0].Id) if (vars.sfdcResponseGroupByLineId?),
+	Item__c: $.nsItem,
+	Item_NS_Internal_Id__c: $.nsItemInternalId,
+	Line_Id__c: $.nsLineId,
+	Item_No__c: $.nsItemNo,
+	Quantity__c: $.nsQuantity,
+	Units__c: $.nsUnits,
+	Description__c: $.nsDescription,
+	Unit_Price__c: $.nsUnitPrice,
+	Amount__c: $.nsAmount,
+	Department__c: $.nsDepartment,
+	Invoice__r: {
+		'Netsuite_Internal_ID__c' : vars.internalId,
+		'type': 'Invoice__c'
+	}
+}]]></ee:set-payload>
+									</ee:message>
+								</ee:transform>
+						<ee:transform doc:name="Set createItemsPayload,deleteItemsPayload and updateItemsPayload" doc:id="0e9a4c15-270b-4caf-b97d-54f4a1aec43e" doc:description="Set createItemsPayload and updateItemsPayload">
+								<ee:message>
+								</ee:message>
+									<ee:variables >
+										<ee:set-variable variableName="createItemsPayload" ><![CDATA[%dw 2.0
+output application/java
+---
+payload filter $.Id == null]]></ee:set-variable>
+										<ee:set-variable variableName="updateItemsPayload" ><![CDATA[%dw 2.0
+output application/java
+---
+payload filter $.Id != null]]></ee:set-variable>
+									</ee:variables>
+							
+</ee:transform>
+						<choice doc:name="Choice" doc:id="7e1fe727-e774-48db-bd64-be787f4f8d0a" >
+			<when expression="#[sizeOf(vars.getSfdcItemByInvoiceIdResponse) == 0]">
+				<logger level="INFO" doc:name="Logger" doc:id="99448089-7857-449c-9037-3dc27b499198" message="Invoice creation scenario. No items found in SFDC."/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Set deleteItemsPayload" doc:id="3d73fb2c-ecdb-429c-abdc-86cd30bb93fd" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="deleteItemsPayload" ><![CDATA[%dw 2.0
+output application/java
+var newData= vars.itemPayload.*nsLineId 
+var oldData= vars.getSfdcItemByInvoiceIdResponse.*Line_Id__c match { case is Null -> [] 
+						case is Array -> vars.getSfdcItemByInvoiceIdResponse.*Line_Id__c}
+var getDeleted =oldData  -- newData
+fun showData(data, id) = data[id]
+---
+getDeleted map $ as Number map {
+Id: showData(vars.sfdcResponseGroupByLineId, ($ as String))[0].Id
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<choice doc:name="Is deleteItemsPayload empty?" doc:id="1f77231c-21cc-40de-87a8-f2dea743353a" doc:description="Is deleteItemsPayload empty?">
+							<when expression="#[sizeOf(vars.deleteItemsPayload) == 0]">
+								<logger level="INFO" doc:name="Logger" doc:id="bea0890a-230a-494a-a87e-3d95c9179a26" message="deleteItemsPayload is empty."/>
+							</when>
+							<otherwise >
+							<ee:transform doc:name="Set payload as deleteItemsPayload" doc:id="080821db-9489-4da0-aff2-c51cb9f408c2" doc:description="Set payload as deleteItemsPayload">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.deleteItemsPayload.*Id]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+								<flow-ref doc:name="deleteItemsSub_Flow" doc:id="53cdd64a-7fb7-4835-98da-fca8ccd9e53c" name="deleteItemsSub_Flow" target="deleteItemResponse" targetValue="#[payload]" />
+							<validation:is-false doc:name="Items deleted successfully?" doc:id="721ea147-f052-4ef8-831b-4f45a65360fe" expression="#[vars.deleteItemResponse.*success contains false]" message="Item deletion failed."/>
+							</otherwise>
+						</choice>
+	
+			</otherwise>
+		</choice>
+		<logger level="DEBUG" doc:name="Logger" doc:id="08573931-fe4a-4296-aaf8-61adf18c8d84" message="items to be created in SFDC = #[vars.createItemsPayload]  and items to be updated in SFDC = #[vars.updateItemsPayload] "/>
+							<choice doc:name="Is createItemsPayload empty?" doc:id="c8134d24-e0dd-4cdd-b016-72b8d8e4db07" doc:description="Is createItemsPayload empty?">
+							<when expression="#[sizeOf(vars.createItemsPayload) == 0]">
+								<logger level="INFO" doc:name="Logger" doc:id="cfa88710-3465-47b1-8094-b3817d3558e7" message="createItemsPayload is empty."/>
+							</when>
+							<otherwise >
+								<ee:transform doc:name="set Payload as createItemsPayload" doc:id="697dfcb3-e4f6-41eb-8fdc-c1dbf24d8f01" doc:description="set Payload as createItemsPayload">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.createItemsPayload]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<flow-ref doc:name="createItemSub_Flow" doc:id="06da9b8c-01f2-4faa-8700-a2b067175ac6" name="createItemSub_Flow" target="createItemResponse" targetValue="#[payload]" />
+						<validation:is-false doc:name="Items created successfully?" doc:id="58011520-3223-4338-875f-a17d78e2acc3" expression="#[vars.createItemResponse.*success contains false]" message="Item creation failed."/>
+							</otherwise>
+						</choice>
+							<choice doc:name="Is updateItemsPayload empty?" doc:id="bcff240b-651e-4090-a6d2-5bfbeca76ac3" doc:description="Is updateItemsPayload empty?">
+							<when expression="#[sizeOf(vars.updateItemsPayload) == 0]">
+								<logger level="INFO" doc:name="Logger" doc:id="336d2fb8-5400-4611-bd07-81eaf94f3d13" message="updateItemsPayload is empty."/>
+							</when>
+							<otherwise >
+							<ee:transform doc:name="Set payload as updateItemsPayload" doc:id="4f0496dd-6479-48d1-97f5-2139bee0add4" doc:description="Set payload as updateItemsPayload">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.updateItemsPayload]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+								<flow-ref doc:name="updateItemSub_Flow" doc:id="b6efba16-434d-4c7a-9f39-dd9ce8834102" name="updateItemSub_Flow" target="updateItemResponse" targetValue="#[payload]" />
+							<validation:is-false doc:name="Items updated successfully?" doc:id="e31f91cf-249a-49ff-9063-98c35a12402f" expression="#[vars.updateItemResponse.*success contains false]" message="Item updation failed."/>
+							</otherwise>
+						</choice>
+												<ee:transform doc:name="Set payload to mark Integration Status as Processed" doc:id="38bbf745-283e-4ba5-8afa-e6545fb377b8" doc:description="Set payload to mark Integration Status as Processed">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	"internalId": vars.internalId,
+	"muleIntegrationStatusId": "3",
+	"sfdcInvoiceId": vars.upsertInvoiceResult[0].id
+}]]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<flow-ref doc:name="updateInvoiceFlow" doc:id="3ea00d96-9ec0-454c-8aaf-bfe703d5167c" name="updateInvoiceFlow"/>
+						<validation:is-true doc:name="Is Invoice marked processed in NetSuite?" doc:id="5538c68d-ced6-4ddd-9c1c-f1e9045e07e7" expression="#[payload.status.isSuccess]" message="updateInvoice NetSuite operation has been failed."/>
+				<ee:transform doc:name="Set successful data in transactionStats" doc:id="c8fb0b08-79c6-4f3d-8540-a36837ac44e1" doc:description="Set successful data in transactionStats">
+							<ee:message >
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="transactionStats" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+total: vars.transactionStats.total,
+success: vars.transactionStats.success as Array ++ [ vars.internalId ],
+fail: vars.transactionStats.fail
+
+}]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="62c526e2-f9e8-4fe6-bbfc-a32663ae10d9" type="ANY">
+						<logger level="ERROR" doc:name="Logger" doc:id="947e0f72-13a1-4a4a-827a-4d7f0011a1a0" message="Error while upserting Invoice id"/>
+								<set-variable value="#[error.description]" doc:name="Set errorDescription" doc:id="ad46cac9-6cfa-4e44-be49-c1a50f2ed828" variableName="errorDescription"/>
+					<ee:transform doc:name="create payload to mark Invoice as Error in NetSuite" doc:id="f788b3d9-395c-4f5f-b721-c01af3fa2a6b" doc:description="create payload to mark Invoice as Error in NetSuite" >
+									<ee:message >
+										<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	"internalId": vars.internalId,
+	"muleIntegrationStatusId": "1"
+}]]]></ee:set-payload>
+									</ee:message>
+								</ee:transform>
+								<flow-ref doc:name="updateInvoiceFlow" doc:id="6c2e7ee6-cef3-457c-86f5-ac6c2b0cd018" name="updateInvoiceFlow"/>
+					<ee:transform doc:name="Set failed data in transactionStats" doc:id="80fe98cf-4086-4d82-9a82-f10fedd93285" doc:description="Set failed data in transactionStats">
+									<ee:message>
+									</ee:message>
+									<ee:variables>
+										<ee:set-variable variableName="transactionStats"><![CDATA[%dw 2.0
+output application/json
+---
+{
+total: vars.transactionStats.total,
+success: vars.transactionStats.success,
+fail: vars.transactionStats.fail as Array ++ [{ id: vars.internalId,
+	invoiceNumber: vars.invoiceNum,
+	errorMessage: vars.errorDescription
+}]
+
+}]]></ee:set-variable>
+									</ee:variables>
+								</ee:transform>
+					</on-error-continue>
+				</error-handler>
+						<!-- 	</try> -->
+		
+
+</flow>
+
+</mule>

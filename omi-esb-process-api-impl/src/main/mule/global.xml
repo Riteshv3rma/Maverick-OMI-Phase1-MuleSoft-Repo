@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd 
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+    <http:listener-config name="omi-esb-process-api-httpListenerConfig">
+        <http:listener-connection host="${secure::http.host}" port="${secure::http.port}" />
+    </http:listener-config>
+    <apikit:config name="omi-esb-process-api-config" raml="omi-esb-process-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    
+<os:object-store name="watermarkStore" doc:name="Object store" />
+	<os:object-store name="watermarkStore_SO" doc:name="Object store" />
+	<configuration-properties file="common.properties" doc:name="Configuration properties" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config"  file="${mule.env}.properties" key="${vault.secret}" />
+	<http:request-config name="HTTP_NetSuite_Request_configuration" doc:name="HTTP Request configuration" doc:id="5289ff8a-bd17-4907-aa20-dfe1b78c74f2" basePath="${secure::http.netsuite.api}" responseTimeout="${secure::http.responseTimeOut}">
+		<http:request-connection host="${secure::http.netsuite.host}" port="${secure::http.netsuite.port}" >
+			<reconnection>
+				<reconnect-forever frequency="${secure::reconnection.frequency}"/>
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="HTTP_SalesCloud_Request_configuration" doc:name="HTTP Request configuration" doc:id="12810484-8f83-4263-bff9-694622f1fcf9" basePath="${secure::http.salescloud.api}" responseTimeout="${secure::http.responseTimeOut}">
+		<http:request-connection host="${secure::http.salescloud.host}" port="${secure::http.salescloud.port}" >
+			<reconnection>
+				<reconnect-forever frequency="${secure::reconnection.frequency}"/>
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+		<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="45dbf704-7f8f-4244-bf46-e79db65d48a0" >
+		<email:smtp-connection host="smtp.office365.com" port="587" user="${secure::dev.user}" password="${secure::dev.password}" connectionTimeout="500" readTimeout="500" writeTimeout="500">
+		<reconnection >
+				<reconnect-forever frequency="${secure::reconnection.frequency}"/>
+			</reconnection>
+			<email:properties> 
+<email:property key="mail.smtp.starttls.enable" value="true" /> 
+</email:properties>
+		</email:smtp-connection>
+	</email:smtp-config>
+</mule>

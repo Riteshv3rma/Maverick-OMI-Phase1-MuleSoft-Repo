@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd">
+	<flow name="test-netsuite-invoicesFlow" doc:id="d5ab104c-2414-4546-91f3-b344baaccbd8" >
+		<http:listener doc:name="Listener" doc:id="df2af3e3-c649-44fa-8b77-c0093fe25aec" config-ref="omi-esb-netsuite-sys-api-httpListenerConfig" path="/getInvoicesByCreationDate"/>
+		<set-variable value="#[attributes.queryParams.creationDate]" doc:name="Set creationDate" doc:id="5db73268-18d5-4643-92c2-e91f13adca89" variableName="creationDate"/>
+		<set-variable value="#[attributes.queryParams.modificationDate]" doc:name="Set lastModDate" doc:id="9cfebfda-77f7-4637-b31b-539c7f72fbaf" variableName="lastModDate"/>
+		<ee:transform doc:name="Transform Message" doc:id="6167125e-61e2-4164-aad0-ddfed9d13b59" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	basic: {
+		mainLine: {
+			searchValue: p('mainLineValue') as Boolean
+		},
+		"type" : {
+			operator: "ANY_OF",
+			searchValue: ["_invoice"]
+		},
+		lastModifiedDate: {
+			operator: "AFTER",
+			searchValue: vars.lastModDate as LocalDateTime {class: "java.time.LocalDateTime"}
+		},
+		customFieldList: {
+			customField: [
+				{
+				scriptId: p('divisionCustomField') as String,
+				operator: p('divisionOperator') as String,
+				searchValue: (p('divisionInternalIds') splitBy(',')) map {
+					internalId: $
+				}  as Object {class: "org.mule.module.netsuite.extension.api.ListOrRecordRef" }
+			} as Object {class: "org.mule.module.netsuite.extension.api.SearchMultiSelectCustomField"}]
+		} as Object {class: "org.mule.module.netsuite.extension.api.SearchCustomFieldList"}
+	}
+} as Object {class: "org.mule.module.netsuite.extension.api.TransactionSearch"}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<netsuite:search key="TRANSACTION" pageSize="1000" doc:name="Search" doc:id="18fb67ed-06ea-4beb-b18d-76214d0b86b2" config-ref="NetSuite_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="dc70e52b-4e8d-4940-8a84-124b9dae1bf9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+(payload filter ($.createdDate > vars.creationDate)) map {
+	//nsCustomerName: $.entity.name,
+	nsCustomerId: $.entity.internalId,
+	nsInternalId: $.internalId,
+	nsCreationDate: $.createdDate,
+	nsModificationDate: $.lastModifiedDate,
+	nsInvoiceNum: $.tranId,
+	nsStatus: $.status
+} ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="testFlow" doc:id="d389b2b7-d541-4326-8993-10572486a8cb" >
+		<http:listener doc:name="Listener" doc:id="4653142f-d147-4f8a-aa99-71485ab4e32a" config-ref="omi-esb-netsuite-sys-api-httpListenerConfig" path="/markInvoiceTBP"/>
+		<ee:transform doc:name="Transform Message" doc:id="1f378141-20a4-49bb-bc0b-cb8ea2ceac35" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="testPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload  map {
+	internalId: $
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="237d7f91-51f3-468e-b13c-2fdc03287514" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="delInvoiceTransactionStats" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	total: payload.*internalId,
+	success: [],
+	fail: []
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="72207bf3-7793-480a-87a1-09abebe5a244" collection="#[vars.testPayload]">
+			<ee:transform doc:name="Transform Message" doc:id="652a27e2-d3d0-4305-ab47-bb50a0fe66d2" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	"internalId": payload.internalId,
+	"muleIntegrationStatusId": "2"
+}]]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-variable value="#[payload[0].internalId]" doc:name="Set internalId" doc:id="125faa70-42ac-4e6a-a9bb-27dd1fffc7f7" variableName="internalId"/>
+			<flow-ref doc:name="updateInvoiceFlow" doc:id="d7ca6092-adbf-4e44-b1a1-1921c4dd7633" name="updateInvoiceFlow" />
+		</foreach>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2bc7fa08-facc-46f1-865e-24b16498c19d" >
+				<logger level="INFO" doc:name="Logger" doc:id="2a365088-30fb-4a58-a1d8-ef410930de7f" message="ERROR"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	
+</mule>

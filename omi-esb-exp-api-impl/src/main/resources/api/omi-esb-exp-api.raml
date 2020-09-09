@@ -1,0 +1,29 @@
+#%RAML 1.0
+title: OMI Experience API
+version: v1.0
+baseUri: http://localhost:8081/api
+
+/samples:
+  description: |
+    Working with samples:
+    * Creating samples          
+  post:
+    displayName: Create sample
+    description: |
+      Create a new sample
+    queryParameters:
+      clientid:
+        description: client_id of user
+        required: true
+        type: string
+      clientsecret:
+        description: client_secret of user
+        required: true
+        type: string
+    body:
+      application/json:
+    responses:
+      201:
+        description: Created
+        body:
+          application/json:

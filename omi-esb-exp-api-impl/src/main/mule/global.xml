@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd 
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	
+	    <http:listener-config name="omi-esb-exp-api-httpListenerConfig">
+        <http:listener-connection host="${secure::http.host}" port="${secure::http.port}" protocol="HTTPS">
+			<tls:context >
+				<tls:key-store type="jks" path="keystore.jks" alias="mule" keyPassword="keystore" password="keystore" />
+			</tls:context>
+		</http:listener-connection>
+    </http:listener-config>
+    <apikit:config name="omi-esb-exp-api-config" raml="omi-esb-exp-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	
+		<vm:config name="VM_Config" doc:name="VM Config" doc:id="a816676f-01f7-4e9d-9af2-f2d67acb2ffe" >
+		<vm:queues >
+			<vm:queue queueName="sample-process-queue" />
+		</vm:queues>
+	</vm:config>
+	<configuration-properties file="common.properties" doc:name="Configuration properties" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config"  file="${mule.env}.properties" key="${vault.secret}" />
+	<http:request-config name="HTTP_Process_Request_configuration" doc:name="HTTP Request configuration" doc:id="bf7fb528-c438-4599-b056-16c12a28d7f2" basePath="${secure::http.process.api}" responseTimeout="${secure::http.responseTimeOut}">
+		<http:request-connection host="${secure::http.process.host}" port="${secure::http.process.port}" >
+			<reconnection>
+				<reconnect-forever frequency="${secure::reconnection.frequency}" />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	
+	</mule>

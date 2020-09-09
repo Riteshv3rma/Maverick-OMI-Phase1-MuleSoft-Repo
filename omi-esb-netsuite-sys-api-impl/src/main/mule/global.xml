@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd 
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	    <http:listener-config name="omi-esb-netsuite-sys-api-httpListenerConfig">
+        <http:listener-connection host="${secure::http.omi.host}" port="${secure::http.omi.port}" />
+    </http:listener-config>
+    <apikit:config name="omi-esb-netsuite-sys-api-config" raml="omi-esb-netsuite-sys-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config"  file="${mule.env}.properties" key="${vault.secret}" />
+	
+		<netsuite:config name="NetSuite_Config" doc:name="NetSuite Config" doc:id="4903be4a-9ca3-4265-acfd-3a4a5a9384ab" >
+		<netsuite:token-authentication-connection consumerKey="${secure::nets.consumer.key}" consumerSecret="${secure::nets.consumer.secret}" tokenId="${secure::nets.token.id}" tokenSecret="${secure::nets.token.secret}" account="${secure::nets.account}" readTimeout="${secure::nets.readTimeout}" connectionTimeout="${secure::nets.connectionTimeout}" signatureAlgorithm="HMAC_SHA_256">
+			<reconnection>
+				<reconnect-forever frequency="${secure::nets.reconnection.frequency}" />
+			</reconnection>
+		</netsuite:token-authentication-connection>
+	</netsuite:config>
+		<configuration-properties file="common.properties" doc:name="Configuration properties" />
+	</mule>

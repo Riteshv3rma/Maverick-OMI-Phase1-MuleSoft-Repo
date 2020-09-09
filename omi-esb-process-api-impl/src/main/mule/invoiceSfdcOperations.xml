@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:core="http://www.mulesoft.org/schema/mule/core" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	
+	<sub-flow name="getInvoiceByNSInvoiceId_SubFlow" doc:id="ebc7b47f-a63a-4b64-9067-dbcb7b9686f6" >
+		<ee:transform doc:name="Transform Message" doc:id="a5b981a3-14ec-436d-ade1-ac29eece0522" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="53228232-3297-479a-9981-139333dda15f" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/invoices/{invoiceNum}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"invoiceNum" : vars.internalId
+}]]]></http:uri-params>
+		</http:request>
+	</sub-flow>
+	<sub-flow name="upsertInvoiceSub_Flow" >
+		<ee:transform doc:name="Transform Message" doc:id="6486f18c-9c0c-44da-8165-c45959bdb727" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Request" doc:id="4add3c70-9568-4221-a150-87024704f22a" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/invoices">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="627e3b2a-e3ea-421e-9927-5f6b19c712fc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="deleteItemsSub_Flow" doc:id="a4a670bf-d709-4d6b-82dd-ea17f27ab1e4" >
+		<http:request method="DELETE" doc:name="Request" doc:id="a8337d6e-7aa8-42ad-98be-390ea9577866" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/items">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+	<ee:transform doc:name="Transform Message" doc:id="0a4156a3-de0e-4862-8caa-db04c255807f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="createItemSub_Flow" doc:id="ed33e1d7-8056-49d4-8b03-08524e3ef03d" >
+		<http:request method="POST" doc:name="Request" doc:id="31bf71d2-d514-4205-a64a-bb44d2a557e8" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/items">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="2a529266-3895-4f7b-a561-3e18e80d7297" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="updateItemSub_Flow" doc:id="13ce8861-936b-4620-8fdd-517d18e8a516" >
+		<http:request method="PUT" doc:name="Request" doc:id="bd73c69d-95a2-4a7d-9811-a0fd1a8d20a7" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/items">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="04e931b3-fc65-420b-854c-c10b7dea1b3d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			
+	</sub-flow>
+	<flow name="getSfdcItemsByInvoiceIdFlow" doc:id="997b565a-a8c5-4aa6-ae11-02c49709e791" >
+		<http:request method="GET" doc:name="Request" doc:id="a3d844ef-cf4b-40c5-90ba-62063b239a29" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/items/{sfdcInvoiceId}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"sfdcInvoiceId" : vars.sfdcInvoiceId
+}]]]></http:uri-params>
+
+		</http:request>
+	
+</flow>
+	<flow name="deleteSfdcInvoiceItemFlow" doc:id="b85cb13d-bd7f-4e60-b33d-c4faab28c32c" >
+		<http:request method="DELETE" doc:name="Request" doc:id="7ff224d6-7bb7-4b53-8d46-81d1f21ca171" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/invoices/{invoiceNum}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"invoiceNum" : vars.internalId
+}]]]></http:uri-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="5af61d57-3dbb-4edd-bd2e-1c7426c69ee6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+			
+</flow>
+		
+	</mule>
