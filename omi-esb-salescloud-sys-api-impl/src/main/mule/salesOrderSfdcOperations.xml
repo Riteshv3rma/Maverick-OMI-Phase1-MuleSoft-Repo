@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd">
+	
+<flow name="updateSalesOrderInSfdcFlow" doc:id="56b794e7-0bc3-4375-85b1-2fb09fba8b2d" >
+		<ee:transform doc:name="Transform Message" doc:id="66526b6f-e173-41f9-9dae-2e734f65de68" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map {
+	("Status_for_Sync__c" : $.syncStatus) if $.syncStatus?,
+	("External_Id__c" : $.externalId) if $.externalId?,
+	("Sales_Order_Number__c" : $.salesOrderNumber) if $.salesOrderNumber?,
+	(Tracking_Number__c: $.trackNo) if $.trackNo?,
+	"Id": $.id
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:update type="Samples__c" config-ref="Salesforce_Sfdc_config" />
+		<ee:transform doc:name="Transform Message" doc:id="b4ee8569-bf18-49ab-889a-2eff4b402e1d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getSalesOrderInSfdcByNSIdFlow" doc:id="44ec4c92-4e8d-4cc2-a9c2-bd94d5bd2b6a" >
+	<salesforce:query config-ref="Salesforce_Sfdc_config" doc:name="Get Samples SFDC Query by Netsuite_Internal_ID__c">
+			<salesforce:salesforce-query>Select Id,Name  from Samples__c where External_Id__c = ':nsInternalId'</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	nsInternalId : payload.internalId
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="d189368b-75be-4ba5-a828-a2029e558507" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	
+</flow>
+	<flow name="getSalesOrderInSfdcByStatusFlow" doc:id="0aaac8ce-7f1c-4df4-bbd7-05d5bf189d80" >
+	<salesforce:query config-ref="Salesforce_Sfdc_config" doc:name="Get Samples SFDC Query by Status_for_Sync__c">
+				<salesforce:salesforce-query>Select Id,Name, (SELECT Id, Name, Samples__c, Products_Name__c, Product_Name_Sync__c ,Item_No__c, Product_External_Id__c, Quantity__c FROM Products__r),Status_for_Sync__c,SalesRep_External_Id__c,Account_Name__c,Account_Address__c,Address_2__c,Zip__c,Country__c,Mailing_Address__c,City__c,Attention_To__c,State__c,Company_Name__c,Contact_Phone__c,Notes__c,Brand__c,Division__c,PO_Num__c  from Samples__c where Status_for_Sync__c IN :status</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	status : payload
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="19bf7f6d-c2de-40e9-ae35-32b595d250cb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

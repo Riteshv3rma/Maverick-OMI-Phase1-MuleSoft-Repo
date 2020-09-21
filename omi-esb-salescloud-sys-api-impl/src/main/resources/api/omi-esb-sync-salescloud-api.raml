@@ -1,0 +1,281 @@
+#%RAML 1.0
+title: Sample Experience API
+version: v1.0
+baseUri: http://localhost:8081/api
+
+/sales:
+    description: |
+        Working with salescloud Objects:
+    /invoices:
+        get:
+            displayName: Get invoices
+            description: |
+                Retrieve all the Invoices according to the filtering.
+            responses:
+              200:
+                body:
+                  application/json:
+                  
+        post:
+            displayName: Create invoice
+            description: |
+              Create a new Invoice
+            body:
+              application/json:
+            responses:
+              201:
+                description: Created
+                body:
+                  application/json:
+                    example: |
+                        {
+                          "internalId": "123456"
+                        }
+                            
+              422:
+                description: Unprocessable entity
+                body:
+                  application/json:
+                    example: |
+                        {
+                          "message": "tranId is required."
+                        }
+
+        /{invoiceNum}:
+            description: |
+              Working with invoices:
+              * Retrieving specific invoice
+              * Updating specific invoice
+              * Deleting specific invoice
+            uriParameters:
+              invoiceNum:
+                type: string | integer
+                example: "301980"
+                description: Represents the invoice Number of native system
+            get:
+              displayName: Get invoice by id
+              description: Get Invoice by ID
+              responses:
+                200:
+                  body:
+                    application/json:
+                404:
+                  body:
+                    application/json:
+                      example: |
+                        {
+                          "message": "Resource not found"
+                        }
+            delete:
+              displayName: Delete invoice by id
+              description: Delete Invoice by ID
+              responses:
+                200:
+                  body:
+                    application/json:
+                404:
+                  body:
+                    application/json:
+                      example: |
+                        {
+                          "message": "Resource not found"
+                        }
+            
+    /items:
+        get:
+            displayName: Get items
+            description: |
+                Retrieve all the Items according to the filtering.
+            responses:
+              200:
+                body:
+                  application/json:
+                  
+        post:
+            displayName: Create item
+            description: |
+              Create a new Item
+            body:
+              application/json:
+            responses:
+              201:
+                description: Created
+                body:
+                  application/json:
+                            
+              422:
+                description: Unprocessable entity
+                body:
+                  application/json:
+        put:
+            displayName: Update item
+            description: |
+              Update Item
+            body:
+              application/json:
+            responses:
+              201:
+                description: Updated
+                body:
+                  application/json:
+                            
+              422:
+                description: Unprocessable entity
+                body:
+                  application/json:
+                        
+        delete:
+            displayName: Delete item
+            description: |
+              Delete Item
+            body:
+              application/json:
+            responses:
+              201:
+                description: Deleted
+                body:
+                  application/json:                            
+              422:
+                description: Unprocessable entity
+                body:
+                  application/json:
+
+        /{sfdcInvoiceId}:
+            description: |
+              Working with items:
+              * Retrieving specific item
+              * Updating specific item
+              * Deleting specific item
+            uriParameters:
+              sfdcInvoiceId:
+                type: string | integer
+                example: "a17J0000008ha6hIAA"
+                description: Represents the item Number of native system
+            get:
+              displayName: Get item by id
+              description: Get Item by ID
+              responses:
+                200:
+                  body:
+                    application/json:
+                404:
+                  body:
+                    application/json:
+                      example: |
+                        {
+                          "message": "Resource not found"
+                        }                        
+
+    /customers:
+        get:
+            displayName: Get customers
+            description: |
+                Retrieve all the Customers according to the filtering.
+            responses:
+              200:
+                body:
+                  application/json:
+                  
+        post:
+            displayName: Create customer
+            description: |
+              Create a new Customer
+            body:
+              application/json:
+            responses:
+              201:
+                description: Created
+                body:
+                  application/json:
+                    example: |
+                        {
+                          "internalId": "123456"
+                        }
+                            
+              422:
+                description: Unprocessable entity
+                body:
+                  application/json:
+                    example: |
+                        {
+                          "message": "tranId is required."
+                        }
+
+        /{customerNum}:
+            description: |
+              Working with customers:
+              * Retrieving specific customer
+              * Updating specific customer
+              * Deleting specific customer
+            uriParameters:
+              customerNum:
+                type: string | integer
+                example: "301980"
+                description: Represents the customer Number of native system
+            get:
+              displayName: Get customer by id
+              description: Get Customer by ID
+              responses:
+                200:
+                  body:
+                    application/json:
+                404:
+                  body:
+                    application/json:
+                      example: |
+                        {
+                          "message": "Resource not found"
+                        } 
+                        
+    /salesorders:
+        get:
+            displayName: Get salesorders
+            description: |
+                Retrieve all the Salesorders according to the filtering.
+            responses:
+              200:
+                body:
+                  application/json:
+                  
+        put:
+            displayName: Update salesorder
+            description: |
+              Update Salesorder
+            body:
+              application/json:
+            responses:
+              201:
+                description: Updated
+                body:
+                  application/json:                            
+              422:
+                description: Unprocessable entity
+                body:
+                  application/json:
+
+        /{salesorderId}:
+            description: |
+              Working with salesorders:
+              * Retrieving specific salesorder
+              * Updating specific salesorder
+              * Deleting specific salesorder
+            uriParameters:
+              salesorderId:
+                type: string | integer
+                example: "301980"
+                description: Represents the salesorder Number of native system
+            get:
+              displayName: Get salesorder by id
+              description: Get Salesorder by ID
+              responses:
+                200:
+                  body:
+                    application/json:
+                404:
+                  body:
+                    application/json:
+                      example: |
+                        {
+                          "message": "Resource not found"
+                        }
+                

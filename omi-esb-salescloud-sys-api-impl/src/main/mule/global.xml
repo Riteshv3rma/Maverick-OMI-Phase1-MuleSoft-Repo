@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+
+	<http:listener-config name="omi-esb-sync-salescloud-api-httpListenerConfig">
+		<http:listener-connection host="${secure::http.host}"
+			port="${secure::http.port}" />
+	</http:listener-config>
+	<apikit:config name="omi-esb-sync-salescloud-api-config"
+		raml="omi-esb-sync-salescloud-api.raml" outboundHeadersMapName="outboundHeaders"
+		httpStatusVarName="httpStatus" />
+	<salesforce:sfdc-config name="Salesforce_Sfdc_config"
+		doc:name="Salesforce Sfdc config">
+		<salesforce:basic-connection password="${secure::sfdc.password}"
+			securityToken="${secure::sfdc.securityToken}" username="${secure::sfdc.username}"
+			url="${secure::sfdc.authUrl}" readTimeout="${secure::sfdc.readTimeOut}" connectionTimeout="${secure::sfdc.connectionTimeOut}" disableSessionInvalidation="true">
+			<reconnection>
+				<reconnect-forever frequency="${secure::sfdc.reconnection.frequency}" />
+			
+</reconnection>
+		</salesforce:basic-connection>
+	</salesforce:sfdc-config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="d236261b-c787-4c94-ab39-a88bfd83bef0" file="${mule.env}.properties" key="${vault.secret}" />
+
+
+
+</mule>

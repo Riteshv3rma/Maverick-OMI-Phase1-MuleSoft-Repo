@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
-	xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
-	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd 
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd 
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd 
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
-http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
-	
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	<flow name="invoice-netsuite-to-sfdcFlow" doc:id="379675ce-4054-4256-87a1-13f07b4f5cf6">
-		<scheduler doc:name="Scheduler" doc:id="2648989e-60ed-42ed-aad9-739b2ae9a443" >
+		<scheduler doc:name="Scheduler" doc:id="a62fd03c-06dc-47c4-8455-c191b425515b" >
 			<scheduling-strategy >
-				<cron expression="${invoice.netsuite.sfdc.cron}"/>
+				<cron expression="${invoice.netsuite.sfdc.cron}" />
 			</scheduling-strategy>
 		</scheduler>
 		<flow-ref doc:name="getInvoicesFlow" doc:id="6c8a0440-5649-48c3-91cb-7658239850ff" name="getInvoicesFlow" target="getInvoiceResult" targetValue="#[payload]"/>
@@ -36,7 +36,7 @@ output application/json
 				<logger level="INFO" doc:name="Logger" doc:id="3ed9ec1e-0c24-4c2c-8418-e1897f2267ea" message="eligible Invoices to be synced with SFDC= #[vars.getInvoiceResult.*nsInternalId]"/>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="Logger" doc:id="1d7a7e00-0c33-47ba-958f-023cda6d2398" message="eligible Invoices to be synced with SFDC= #[vars.getInvoiceResult.*nsInternalId]" />
+				<logger level="TRACE" doc:name="Logger" doc:id="1d7a7e00-0c33-47ba-958f-023cda6d2398" message="eligible Invoices to be synced with SFDC= #[vars.getInvoiceResult.*nsInternalId]" />
 			<ee:transform doc:name="Set List of InternalIds" doc:id="3c2067fd-3aff-4bec-993a-9966ca6e274f" doc:description="Set List of InternalIds">
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
@@ -48,9 +48,22 @@ vars.getInvoiceResult map {
 			</ee:message>
 		</ee:transform>
 				<flow-ref doc:name="getInvoiceByIdFlow" doc:id="b3317cfb-c90d-4893-8eac-e56626eea00b" name="getInvoiceByIdFlow"/>
-		<foreach doc:name="For Each" doc:id="9166d18a-a3bf-4799-8f02-7c9fe21ed579" >
+		<set-variable value="#[output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -&gt; {
+	nsInternalId: payload01.nsInternalId,
+	nsInvoiceNum: payload01.nsInvoiceNum,
+	muleIntegrationStatus: payload01.muleIntegrationStatus,
+	nsItems: payload01.nsItems map ( nsItem , indexOfNsItem ) -&gt; {
+		nsItemInternalId: nsItem.nsItemInternalId,
+		nsLineId: nsItem.nsLineId
+	}
+}]" doc:name="Set_Invoice_Payload" doc:id="f1ff9965-fd2a-4dcc-86dd-516b8083d4c4" variableName="Invoice_payload" />
+				<logger level="INFO" doc:name="Log_NetSuite_Payload" doc:id="2c28f1ed-766b-4936-8e62-27229410dc5e" message="INVOICES RECEIVED FROM NETSUITE----#[vars.Invoice_payload]"/>
+				<foreach doc:name="For Each" doc:id="9166d18a-a3bf-4799-8f02-7c9fe21ed579" >
 			<set-variable value="#[payload.nsInternalId]" doc:name="Set internalId" doc:id="e9f83843-05f9-4c95-9ece-587f010afc3c" variableName="internalId" />
 			<set-variable value="#[payload.nsInvoiceNum]" doc:name="Set invoiceNum" doc:id="2824f907-a543-4bb2-9e08-99aabced0a7d" variableName="invoiceNum"/>
+					<logger level="INFO" doc:name="Logger" doc:id="8c97eb84-831c-4c11-b9da-432757054116" message="--------------------------BEGIN PROCESSING FOR INVOICE NUMBER -  #[vars.invoiceNum] --------------------------"/>
 					<flow-ref name="foreachInvoiceSyncFlow" doc:name="foreachInvoiceSyncFlow" />								
 		</foreach>
 		<logger level="INFO" doc:name="Logger" doc:id="6ca78002-bd64-4921-aa4b-d10d5286e691" message="transactionStats = #[vars.transactionStats]" />
@@ -113,7 +126,16 @@ output application/java
 							</ee:variables>
 						</ee:transform>
 						<validation:is-true doc:name="Is dataValidation passed?" doc:id="d094a521-3886-4971-bb06-045ab8f2eed5" message="Either customerId or internalId is null in invoice" expression="#[vars.dataValidation]"/>
-						<ee:transform doc:name="Transform Message" doc:id="8c9ee24d-076b-4811-836f-c83ab910b35d" >
+						<ee:transform doc:name="Transform Message" doc:id="83268b6e-21e8-4e64-8a81-f1525c3f81f8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log_Data_For_SF_POST" doc:id="3a423ab2-6672-473c-8063-804db5a813a0" message='"--------------------BEFORE - PAYLOAD TO UPDATE SF WITH INVOICE DATA-----------------" ++ #[payload]'/>
+		<ee:transform doc:name="Transform Message" doc:id="8c9ee24d-076b-4811-836f-c83ab910b35d" >
 						<ee:message >
 							<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
@@ -129,13 +151,14 @@ payload.nsItems
 						</ee:variables>
 					</ee:transform>
 					<flow-ref doc:name="upsertInvoiceSub_Flow" doc:id="c2d40ca5-8f8e-4b40-bf43-961dd1e1b370" name="upsertInvoiceSub_Flow" target="upsertInvoiceResult" targetValue="#[payload]"/>
-					<logger level="INFO" doc:name="Logger" doc:id="20b19edc-fe60-4190-ace6-1e5c0345aec8" message="payload after upserting invoice in SFDC=  #[vars.upsertInvoiceResult] " />
+					<logger level="INFO" doc:name="Logger" doc:id="20b19edc-fe60-4190-ace6-1e5c0345aec8" message="-------------------------PAYLOAD AFTER UPDATING INVOICES IN SF =  #[vars.upsertInvoiceResult]" />
 						<validation:is-false doc:name="Is invoice successfully upserted in SFDC?" doc:id="98ff55eb-aa31-46f0-87ea-0490f13c0c0f" expression="#[vars.upsertInvoiceResult.*success contains false]" message="Error while upserting invoice in SFDC."/>
 						<set-variable value="#[vars.upsertInvoiceResult[0].id]" doc:name="Set sfdcInvoiceId" doc:id="86b8d1e5-60a9-4897-b5d6-39c6f6e58a1d" variableName="sfdcInvoiceId"/>
-						<flow-ref doc:name="getSfdcItemsByInvoiceIdFlow" doc:id="dc1437fc-52a4-4c06-93e9-5c3f0e10e134" name="getSfdcItemsByInvoiceIdFlow" target="getSfdcItemByInvoiceIdResponse" targetValue="#[payload]"/>
-				<choice doc:name="Choice" doc:id="eed5a61b-929d-4dc9-8b23-f98d58f93076" >
+		<flow-ref doc:name="getSfdcItemsByInvoiceIdFlow" doc:id="dc1437fc-52a4-4c06-93e9-5c3f0e10e134" name="getSfdcItemsByInvoiceIdFlow" target="getSfdcItemByInvoiceIdResponse" targetValue="#[payload]"/>
+				<logger level="INFO" doc:name="Get_SF_Items_Logger" doc:id="8d1746af-0128-44c6-b42d-a3ef9c431af8" message="'-----------------SF GET() RESPONSE ON ITEMS FOR THE INVOICE---------------------' ++ #[vars.getSfdcItemByInvoiceIdResponse]"/>
+		<choice doc:name="Choice" doc:id="eed5a61b-929d-4dc9-8b23-f98d58f93076" >
 			<when expression="#[sizeOf(vars.getSfdcItemByInvoiceIdResponse) == 0]">
-				<logger level="INFO" doc:name="Logger" doc:id="49670f5f-8cb7-4eec-bea4-2ce14c9b3cb6" message="Invoice creation scenario. No items found in SFDC."/>
+				<logger level="INFO" doc:name="Logger" doc:id="49670f5f-8cb7-4eec-bea4-2ce14c9b3cb6" message="---------------NO ITEMS FOUND IN SALESFORCE FOR THE GIVEN INVOICE------------------"/>
 			</when>
 			<otherwise >
 				<ee:transform doc:name="Set sfdcResponseGroupByLineId" doc:id="49b581f5-c1f3-4ff0-bea4-832876ea6710" doc:description="Set sfdcResponseGroupByLineId">
@@ -175,7 +198,8 @@ vars.itemPayload map {
 }]]></ee:set-payload>
 									</ee:message>
 								</ee:transform>
-						<ee:transform doc:name="Set createItemsPayload,deleteItemsPayload and updateItemsPayload" doc:id="0e9a4c15-270b-4caf-b97d-54f4a1aec43e" doc:description="Set createItemsPayload and updateItemsPayload">
+						<logger level="INFO" doc:name="TransformedLineItems_Logger" doc:id="b1fd7458-362c-4690-8075-1f56a6180de9" message="'-------------------------PAYLOAD TO INSERT/UPDATE ITEMS IN SF-------------------' ++ #[payload]"/>
+		<ee:transform doc:name="Set createItemsPayload,deleteItemsPayload and updateItemsPayload" doc:id="0e9a4c15-270b-4caf-b97d-54f4a1aec43e" doc:description="Set createItemsPayload and updateItemsPayload">
 								<ee:message>
 								</ee:message>
 									<ee:variables >
@@ -232,13 +256,14 @@ vars.deleteItemsPayload.*Id]]></ee:set-payload>
 	
 			</otherwise>
 		</choice>
-		<logger level="DEBUG" doc:name="Logger" doc:id="08573931-fe4a-4296-aaf8-61adf18c8d84" message="items to be created in SFDC = #[vars.createItemsPayload]  and items to be updated in SFDC = #[vars.updateItemsPayload] "/>
+		<logger level="DEBUG" doc:name="Logger" doc:id="08573931-fe4a-4296-aaf8-61adf18c8d84" message="----------ITEMS TO BE CREATED IN SF= #[vars.createItemsPayload] ------------ITEMS TO BE UPDATED IN SFDC = #[vars.updateItemsPayload]"/>
 							<choice doc:name="Is createItemsPayload empty?" doc:id="c8134d24-e0dd-4cdd-b016-72b8d8e4db07" doc:description="Is createItemsPayload empty?">
 							<when expression="#[sizeOf(vars.createItemsPayload) == 0]">
-								<logger level="INFO" doc:name="Logger" doc:id="cfa88710-3465-47b1-8094-b3817d3558e7" message="createItemsPayload is empty."/>
+								<logger level="INFO" doc:name="Logger" doc:id="cfa88710-3465-47b1-8094-b3817d3558e7" message="----------NO ITEMS TO CREATE FOR THIS INVOICE------------"/>
 							</when>
 							<otherwise >
-								<ee:transform doc:name="set Payload as createItemsPayload" doc:id="697dfcb3-e4f6-41eb-8fdc-c1dbf24d8f01" doc:description="set Payload as createItemsPayload">
+								<logger level="INFO" doc:name="Logger" doc:id="f95eddf0-67e6-47fd-ad6b-14821210a93f" message="---------------CREATING ITEMS IN SF---------------------"/>
+				<ee:transform doc:name="set Payload as createItemsPayload" doc:id="697dfcb3-e4f6-41eb-8fdc-c1dbf24d8f01" doc:description="set Payload as createItemsPayload">
 							<ee:message>
 								<ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -255,7 +280,8 @@ vars.createItemsPayload]]></ee:set-payload>
 								<logger level="INFO" doc:name="Logger" doc:id="336d2fb8-5400-4611-bd07-81eaf94f3d13" message="updateItemsPayload is empty."/>
 							</when>
 							<otherwise >
-							<ee:transform doc:name="Set payload as updateItemsPayload" doc:id="4f0496dd-6479-48d1-97f5-2139bee0add4" doc:description="Set payload as updateItemsPayload">
+							<logger level="INFO" doc:name="Logger" doc:id="15b55ff0-42c6-4f3c-9633-aed47f0d35d8" message="---------------UPDATING ITEMS IN SF---------------------"/>
+				<ee:transform doc:name="Set payload as updateItemsPayload" doc:id="4f0496dd-6479-48d1-97f5-2139bee0add4" doc:description="Set payload as updateItemsPayload">
 							<ee:message>
 								<ee:set-payload><![CDATA[%dw 2.0
 output application/json

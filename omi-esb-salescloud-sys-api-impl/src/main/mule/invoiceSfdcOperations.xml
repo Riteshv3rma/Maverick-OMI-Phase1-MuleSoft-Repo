@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:core="http://www.mulesoft.org/schema/mule/core" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	
+	<sub-flow name="getInvoiceByNSInvoiceId_SubFlow" doc:id="ebc7b47f-a63a-4b64-9067-dbcb7b9686f6" >
+		<salesforce:query config-ref="Salesforce_Sfdc_config" doc:name="Get Invoice SFDC Query by Netsuite_Internal_ID__c">
+			<salesforce:salesforce-query>Select Id,Name  from Invoice__c where Netsuite_Internal_ID__c = ':nsInternalId'</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	nsInternalId : vars.invoiceNum
+}]]]></salesforce:parameters>
+		</salesforce:query>
+	</sub-flow>
+	<sub-flow name="upsertInvoiceSub_Flow" >
+			<salesforce:upsert type="Invoice__c" doc:name="Upsert" config-ref="Salesforce_Sfdc_config" externalIdFieldName="Netsuite_Internal_ID__c" />
+		<ee:transform doc:name="Transform Message">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="deleteInvoiceSub_Flow" doc:id="d8b20b21-6e92-4503-98fc-7d0a0d479237" >
+		<salesforce:delete doc:name="Delete" doc:id="170ca2f5-668a-47a9-a9b0-e5aa312ca91a" config-ref="Salesforce_Sfdc_config">
+		</salesforce:delete>
+		<ee:transform doc:name="Transform Message" doc:id="9a9659e2-7537-4788-88ff-c1a92d7ef4d4">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="deleteItemsSub_Flow" doc:id="a4a670bf-d709-4d6b-82dd-ea17f27ab1e4" >
+		<salesforce:delete doc:name="Delete" doc:id="34ecc484-b281-4c2d-81cd-363d7ccde5b9" config-ref="Salesforce_Sfdc_config" />
+	<ee:transform doc:name="Transform Message" doc:id="0a4156a3-de0e-4862-8caa-db04c255807f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="createItemSub_Flow" doc:id="ed33e1d7-8056-49d4-8b03-08524e3ef03d" >
+			<salesforce:create type="Item__c" doc:name="Create" doc:id="f88d33d7-e45c-4aa1-b303-f4cbd98d73c8" config-ref="Salesforce_Sfdc_config" />
+		<ee:transform doc:name="Transform Message" doc:id="e2e75af9-0371-4c74-be8b-4209d6a0bec9">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="updateItemSub_Flow" doc:id="13ce8861-936b-4620-8fdd-517d18e8a516" >
+			<salesforce:update type="Item__c" doc:name="Update" doc:id="60e6bf11-9c78-4e41-88ba-863ca447567e" config-ref="Salesforce_Sfdc_config" />
+		<ee:transform doc:name="Transform Message" doc:id="aee4244f-b5e1-44cf-a4b8-d2412cdb03c5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+
+	<flow name="getSfdcItemsByInvoiceIdFlow" doc:id="997b565a-a8c5-4aa6-ae11-02c49709e791" >
+	<salesforce:query config-ref="Salesforce_Sfdc_config" doc:name="Get SFDC Items By sfdcInvoiceId">
+			<salesforce:salesforce-query >Select Id,Name, Line_Id__c  from Item__c where Invoice__c = ':invoiceId' </salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	invoiceId : vars.sfdcInvoiceId
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="47fd82a7-7db6-457b-81df-a5ca7cc13a58" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="deleteSfdcInvoiceItemFlow" doc:id="b85cb13d-bd7f-4e60-b33d-c4faab28c32c" >
+		<flow-ref doc:name="getInvoiceByNSInvoiceId_SubFlow" doc:id="0cb5d708-6eda-4a74-b8e4-cd22e3604663" name="getInvoiceByNSInvoiceId_SubFlow" />
+		<ee:transform doc:name="Transform Message" doc:id="18a0dbd1-e871-48ae-8859-13e245fe0e11" >
+							<ee:message >
+							</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="sfdcInvoiceResponse" ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+						
+</ee:transform>
+		<choice doc:name="Choice" doc:id="e70ca724-0a04-4f8b-9069-6a91102e37f9" >
+			<when expression="#[sizeOf(vars.sfdcInvoiceResponse)== 0]">
+				<logger level="INFO" doc:name="Logger" doc:id="e0008ecd-7b8d-45b2-954a-79940a6abdb3" message="invoice doesn't exist in Salesforce."/>
+			</when>
+			<!-- <when expression="#[sizeOf(vars.sfdcInvoiceResponse) &gt; 1]">
+				<logger level="INFO" doc:name="Logger" doc:id="bc6ace11-e296-4601-ab79-604a709f30ca" message="ERROR"/>
+			</when> -->
+			<otherwise >
+				<foreach doc:name="For Each" doc:id="3630daea-5588-4f05-943e-cf56609d026a" collection="#[vars.sfdcInvoiceResponse]">
+					<set-variable value="#[payload.Id]" doc:name="Set sfdcInvoiceId" doc:id="a4a360c2-0faf-4c94-874b-9c19231348f1" variableName="sfdcInvoiceId" />
+					<flow-ref doc:name="getSfdcItemsByInvoiceIdFlow" doc:id="2e0d988d-732a-4308-a565-a6600c3d0235" name="getSfdcItemsByInvoiceIdFlow" target="sfdcItemsResponse" targetValue="#[payload]"/>
+				<choice doc:name="Choice" doc:id="aec01262-46c4-4a7b-a01f-6d47ef36a362" >
+					<when expression="#[sizeOf(vars.sfdcItemsResponse) == 0]">
+						<logger level="INFO" doc:name="Logger" doc:id="f6443339-efa3-47b7-80c0-5883c0fe7bf0" message="No items found for the invoice."/>
+					</when>
+					<otherwise >
+						<ee:transform doc:name="Transform Message" doc:id="0a44531a-0775-47c6-b0f5-57a3d6ccf226" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+vars.sfdcItemsResponse.*Id]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<flow-ref doc:name="deleteItemsSub_Flow" doc:id="c1e154e4-39e6-41d2-a397-ab3526f44b50" name="deleteItemsSub_Flow"/>
+					</otherwise>
+				</choice>
+								</foreach>
+								<ee:transform doc:name="Transform Message" doc:id="be1f8243-9041-4baa-ad5c-17617a569116">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+vars.sfdcInvoiceResponse.*Id]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="deleteInvoiceSub_Flow" doc:id="91eac4ff-6633-403e-87d3-b0d9ed0c3686" name="deleteInvoiceSub_Flow"/>	
+								
+				
+			</otherwise>
+		</choice>
+	</flow>
+
+	</mule>

@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <flow name="omi-esb-sync-salescloud-api-main">
+        <http:listener config-ref="omi-esb-sync-salescloud-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="omi-esb-sync-salescloud-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="ANY">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="0ede5612-6b05-47e2-a2a0-53609bc3e4ff">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: error.description}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[503]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="omi-esb-sync-salescloud-api-console">
+        <http:listener config-ref="omi-esb-sync-salescloud-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="omi-esb-sync-salescloud-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="delete:\sales\invoices\(invoiceNum):omi-esb-sync-salescloud-api-config">
+        <ee:transform doc:id="e9ab94ec-c67e-4cb8-9fc5-bebe7297c5a0">
+            <ee:variables>
+                <ee:set-variable variableName="invoiceNum"><![CDATA[attributes.uriParams.invoiceNum]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" doc:name="Logger" doc:id="fc8d38fa-f10b-4c20-97a9-6a2efb3fb40e" message="NetSuite Id of Invoice to be deleted = #[vars.invoiceNum]"/>
+		<flow-ref doc:name="deleteSfdcInvoiceItemFlow" doc:id="2dbf04b1-5372-45d9-abdb-39ed81c30574" name="deleteSfdcInvoiceItemFlow" />
+		<ee:transform doc:name="Transform Message" doc:id="c738a603-6233-4627-a00c-20518fcb7736" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+
+    <flow name="get:\sales\invoices:omi-esb-sync-salescloud-api-config">
+        <logger level="INFO" message="get:\sales\invoices:omi-esb-sync-salescloud-api-config" />
+    </flow>
+    <flow name="get:\sales\invoices\(invoiceNum):omi-esb-sync-salescloud-api-config">
+        <ee:transform doc:id="626229d8-72d2-47f0-a7df-478b5d6facd5">
+            <ee:variables>
+                <ee:set-variable variableName="invoiceNum"><![CDATA[attributes.uriParams.invoiceNum]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" doc:name="Logger" doc:id="de57d1a5-f02c-4d3f-be6a-4fb05d5a070c" message="NetSuite Id of Invoice to be get = #[vars.invoiceNum]"/>
+		<flow-ref doc:name="getInvoiceByNSInvoiceId_SubFlow" doc:id="a5257bec-295b-446b-bf63-c6452c9e09a8" name="getInvoiceByNSInvoiceId_SubFlow" />
+		<ee:transform doc:name="Transform Message" doc:id="9b86cc95-e376-4455-b9ff-a26548131f1a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+    <flow name="post:\sales\invoices:omi-esb-sync-salescloud-api-config">
+        <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="399d06f0-2f00-4d6c-91c4-7b52bb6fdabf">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload map {
+	Account_NetSuite_Id__c: $.nsCustomerId,
+	Netsuite_Internal_ID__c: $.nsInternalId,
+	Invoice__c: $.nsInvoiceNum,
+	Transaction__c: $.nsTranNum,
+	(Date__c: ($.nsTranDate as Date )) if $.nsTranDate?,
+	Division__c: $.nsDivision,
+	Subtotal__c: if ($.nsSubtotal != null) $.nsSubtotal else 0.0,
+	Transaction_Discount__c: if ($.nsTransactionDiscount != null) $.nsTransactionDiscount else 0.0,
+	Tax__c: if ($.nsTax != null) $.nsTax else 0.0,
+	Shipping_Cost__c: if ($.nsShippingCost != null) $.nsShippingCost else 0.0,
+	Handling_Cost__c: if ($.nsHandlingCost != null) $.nsHandlingCost else 0.0,
+	Total__c: if ($.nsTotal != null) $.nsTotal else 0.0,
+	Amount_Due__c: if ($.nsAmountDue != null) $.nsAmountDue else 0.0,
+	Status__c: $.nsStatus
+	
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <flow-ref doc:name="upsertInvoiceSub_Flow" doc:id="e92fb109-db4a-426c-a345-4c59dc9b05e8" name="upsertInvoiceSub_Flow" />
+		<logger level="INFO" doc:name="Logger" doc:id="b6c98a0e-1c03-4b80-a742-220c3d8d3bba" message="upsertInvoiceResponse in SFDC= #[payload]"/>
+    </flow>
+    <flow name="get:\sales\customers:omi-esb-sync-salescloud-api-config">
+        <logger level="INFO" message="get:\sales\customers:omi-esb-sync-salescloud-api-config" />
+    </flow>
+    <flow name="get:\sales\items:omi-esb-sync-salescloud-api-config">
+        <logger level="INFO" message="get:\sales\items:omi-esb-sync-salescloud-api-config" />
+    </flow>
+    <flow name="get:\sales\salesorders:omi-esb-sync-salescloud-api-config">
+		<ee:transform doc:name="Transform Message" doc:id="25eaae43-1ceb-4f7c-ae55-7ccd164945ce" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"(" ++ (((p('secure::salesorder-staus') splitBy (',')) map ("'" ++ $ ++"'")) joinBy ",") ++ ")"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="getSalesOrderInSfdcByStatusFlow" doc:id="ef040a7e-3866-4184-9063-a35021aa6e3c" name="getSalesOrderInSfdcByStatusFlow"/>
+    </flow>
+    <flow name="get:\sales\customers\(customerNum):omi-esb-sync-salescloud-api-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerNum">attributes.uriParams.customerNum</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" message="get:\sales\customers\(customerNum):omi-esb-sync-salescloud-api-config" />
+    </flow>
+    <flow name="get:\sales\items\(sfdcInvoiceId):omi-esb-sync-salescloud-api-config">
+        <ee:transform doc:id="f4574799-43ea-4e8a-b2ed-bc2521c7ee1b">
+            <ee:variables>
+                <ee:set-variable variableName="sfdcInvoiceId"><![CDATA[attributes.uriParams.sfdcInvoiceId]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="getSfdcItemsByInvoiceIdFlow" doc:id="8724f0e8-4354-4991-8ad6-6d636e6ae5e2" name="getSfdcItemsByInvoiceIdFlow" />
+		<logger level="INFO" doc:name="Logger" doc:id="8efe3754-b8d9-469a-87aa-f86dec0b69bd" message="getItemResponseByInvoiceId= #[payload]"/>
+    </flow>
+    <flow name="get:\sales\salesorders\(salesorderId):omi-esb-sync-salescloud-api-config">
+        <ee:transform doc:name="Transform Message" doc:id="f14c1185-3613-4ade-9205-4c249e985fd0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"internalId": attributes.uriParams.salesorderId
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref name="getSalesOrderInSfdcByNSIdFlow" doc:name="getSalesOrderInSfdcByNSIdFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="d60b3359-e1e0-4994-8140-d49dd9acbea7" message="getSalesOrderResponse= #[payload]"/>
+    </flow>
+    <flow name="post:\sales\customers:omi-esb-sync-salescloud-api-config">
+        <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="d4bf272a-e0b4-447f-848c-ff5ca25f6c0e">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <flow-ref name="upsertCustomerFlow" doc:name="upsertCustomerFlow" />
+    </flow>
+    <flow name="post:\sales\items:omi-esb-sync-salescloud-api-config">
+        <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="23fd588e-b3d5-4ab3-9002-a1cbfb930dcd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <flow-ref doc:name="createItemSub_Flow" doc:id="b53f9021-781f-4b8e-8866-2c9a45eb56b2" name="createItemSub_Flow" />
+    </flow>
+    <flow name="put:\sales\salesorders:omi-esb-sync-salescloud-api-config">
+        <flow-ref name="updateSalesOrderInSfdcFlow" doc:name="updateSalesOrderInSfdcFlow" />
+       
+       
+    </flow>
+    <flow name="put:\sales\items:omi-esb-sync-salescloud-api-config">
+        <ee:transform doc:name="Transform Message" doc:id="9aad124e-6896-4803-a6eb-264bec2acb08" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="updateItemSub_Flow" doc:id="91349474-970c-4e6c-995d-9eaf03b78ea1" name="updateItemSub_Flow"/>
+    </flow>
+    <flow name="delete:\sales\items:omi-esb-sync-salescloud-api-config">
+		<ee:transform doc:name="Transform Message" doc:id="84326329-8d18-47d5-86ed-8da871fe693d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="deleteItemsSub_Flow" doc:id="b710b269-8ba0-4f0d-9265-4084957a786e" name="deleteItemsSub_Flow"/>
+    </flow>
+</mule>
