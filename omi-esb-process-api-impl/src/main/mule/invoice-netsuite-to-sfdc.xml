@@ -11,7 +11,7 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	<flow name="invoice-netsuite-to-sfdcFlow" doc:id="379675ce-4054-4256-87a1-13f07b4f5cf6">
-		<scheduler doc:name="Scheduler" doc:id="a62fd03c-06dc-47c4-8455-c191b425515b" >
+		<scheduler doc:name="Scheduler" doc:id="66431d54-74f3-4f14-9c4c-f0668f6689d3" >
 			<scheduling-strategy >
 				<cron expression="${invoice.netsuite.sfdc.cron}" />
 			</scheduling-strategy>
@@ -85,7 +85,7 @@ output application/json
 				<flow-ref doc:name="send-email-notificationFlow" doc:id="2ff18e96-2f4e-412e-a8aa-d1447084f85f" name="send-email-notificationFlow"/>
 			</when>
 					<otherwise >
-						<logger level="INFO" doc:name="Invoice NetSuite to SFDC Migration process has been finished!" doc:id="7a84ac17-911e-4dda-9a22-62070aa1459b" message="Invoice NetSuite to SFDC Migration process has been finished" />
+						<logger level="INFO" doc:name="Invoice NetSuite to SFDC Migration process has been finished!" doc:id="7a84ac17-911e-4dda-9a22-62070aa1459b" message="-------------Invoice NetSuite to SFDC Migration process has finished------------------" />
 					</otherwise>
 				</choice>
 			</otherwise>
