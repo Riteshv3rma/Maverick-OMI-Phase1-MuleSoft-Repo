@@ -4,7 +4,7 @@
 
 	<groupId>com.omi</groupId>
 	<artifactId>omi-esb-process-api-impl</artifactId>
-	<version>1.0.2-SNAPSHOT</version>
+	<version>1.0.3-SNAPSHOT</version>
 	<packaging>mule-application</packaging>
 
 	<name>omi-esb-process-api-impl</name>
