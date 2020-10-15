@@ -168,7 +168,7 @@ payload map {
 	},
 	"address": {
 		"zip": $.Zip__c,
-		"country": dasherizeAndUpper($.Country__c),
+		"country": dasherizeAndUpper($.Country_Name__c),
 		"addr2": $.Address_2__c,
 		"city": $.City__c,
 		"addr1": $.Account_Address__c,

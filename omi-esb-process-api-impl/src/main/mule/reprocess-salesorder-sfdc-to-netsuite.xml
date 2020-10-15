@@ -15,6 +15,21 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 			</scheduling-strategy>
 		</scheduler>
 		<flow-ref doc:name="getSalesOrderInSfdcByStatusFlow" doc:id="a5891608-4131-4568-b966-5b619198b54d" name="getSalesOrderInSfdcByStatusFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="ffda0c1a-787f-49e2-92ef-555e455420c4" message="------------RECEIVED FROM SALESFORCE----------------"/>
+		<logger level="INFO" doc:name="Logger" doc:id="c48c6280-d0e7-4725-a771-81b38a5e0eae" message='#[%dw 2.0
+import * from dw::core::Strings
+output application/json 
+fun dasherizeAndUpper(country) = upper(underscore(country))
+
+---
+payload map {
+	"address": {
+		
+		"country_dasherize": dasherizeAndUpper($.Country_Name__c),
+		"country": $.Country_Name__c
+		
+	}
+}]'/>
 		<ee:transform doc:name="Transform Message" doc:id="a50d9c57-5bf5-40fd-88b3-80c461fce545" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
@@ -72,6 +87,7 @@ output application/json
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="c0ffdaba-6532-422c-a1c9-b74372581783" message="----------------ADDRESS AFTER TRANSFORMATION TO NETSUITE DATA FORMAT----------------#[payload.address.country]"/>
 		<logger level="INFO" doc:name="Logger" doc:id="4c3161a2-794b-4251-889f-abb302edc84e" message="eligible salesOrder to be reprocessed = #[payload.*id]"/>
 		<foreach doc:name="For Each" doc:id="6e171f55-b282-46b2-9598-d1cc072701a7" >
 			<ee:transform doc:name="Transform Message" doc:id="cb6b96d1-ddc0-44e5-8d0b-2eddb90d71b7" >

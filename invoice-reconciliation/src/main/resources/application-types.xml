@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="payload" format="csv">
+      <types:shape format="weave" example="examples/Sample.csv"><![CDATA[%dw 2.0
+
+type payload = Array<{| column_0: String |}> {"isQuotedString": "false",
+"header": "false",
+"headerLineNumber": "0"}
+
+]]></types:shape>
+      <types:properties>
+        <types:property name="headerLineNumber" value="0"/>
+        <types:property name="header" value="false"/>
+        <types:property name="isQuotedString" value="false"/>
+      </types:properties>
+    </types:type>
+    <types:type name="input" format="json">
+      <types:shape format="weave" example="examples/JSON_Input_Format.json"><![CDATA[%dw 2.0
+
+type input = Array<String> {"example": "[\\\"4831653\\\",\\\"4839041\\\",\\\"4839609\\\",\\\"4839614\\\",\\\"4839621\\\"]"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#3aac7369-5308-448a-a130-b82e45a4d7bd"/>
+</types:mule>

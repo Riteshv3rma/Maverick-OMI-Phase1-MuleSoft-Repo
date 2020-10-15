@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	
+		<netsuite:config name="NetSuite_Config" doc:name="NetSuite Config" doc:id="7900b353-90da-4cab-90c2-41d8f82fbd8b" >
+		<netsuite:token-authentication-connection consumerKey="${secure::nets.consumer.key}" consumerSecret="${secure::nets.consumer.secret}" tokenId="${secure::nets.token.id}" tokenSecret="${secure::nets.token.secret}" account="${secure::nets.account}" readTimeout="${secure::nets.readTimeout}" connectionTimeout="${secure::nets.connectionTimeout}" signatureAlgorithm="HMAC_SHA_256">
+			<reconnection>
+				<reconnect-forever frequency="${secure::nets.reconnection.frequency}" />
+			</reconnection>
+		</netsuite:token-authentication-connection>
+	</netsuite:config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="8261d099-d0d7-487a-a9a0-9791b26759f8" file="${mule.env}.properties" key="mulesoft12345678"/>
+	<configuration-properties doc:name="Configuration properties" doc:id="d594512f-8dc3-4ad1-937f-9c83d0186ece" file="common.properties" />
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="49487509-6aef-4eef-9b7d-859de7f476cb" >
+		<salesforce:basic-connection username="${secure::sfdc.username}" securityToken="${secure::sfdc.securityToken}" url="${secure::sfdc.authUrl}" password="${secure::sfdc.password}"/>
+	</salesforce:sfdc-config>
+	<http:request-config name="HTTP_Request_Main_API" doc:name="HTTP Request configuration" doc:id="7b1f86b8-edc8-4aa9-bfda-fea27a44b129" >
+		<http:request-connection host="${secure::http.req.omi.host}" port="${secure::http.req.omi.port}" />
+	</http:request-config>
+	<flow name="invoiceReconciliation" doc:id="2844f06a-4503-4921-b29b-a0cf62103b80" >
+		<scheduler doc:name="Scheduler" doc:id="3a54cc2e-e990-4e21-8aac-3317375ec3a9" >
+			<scheduling-strategy >
+				<cron expression="${cronjob.start}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="Logger" doc:id="b295d3e9-52f2-444c-b606-7a669a6ea5ab" message="--------------(START OF FLOW)----- THE INVOICE RECONCILIATION PROCESS HAS TRIGGERED. THE TIME IS - #[now()]-----------------"/>
+		<logger level="INFO" doc:name="Logger" doc:id="e4c28cb5-3708-4983-b8cf-32e43725ccc1" message="#[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+(substringBefore((now() - |P1D|),'Z') replace &quot;T&quot; with(&quot; &quot;))]"/>
+		<ee:transform doc:name="Transform Message" doc:id="b8903e56-5136-4bc2-aa37-da3b318a01d0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+{
+	basic: {
+		lastModifiedDate: {
+			operator: "AFTER",
+		searchValue: (substringBefore((now() - |P1D|),'Z') replace "T" with(" ")) as LocalDateTime {format: "yyyy-MM-dd HH:mm:ss.SSS"}
+			
+		//searchValue: '2020-10-07 00:45:55.014' as LocalDateTime {format: "yyyy-MM-dd HH:mm:ss.SSS"}
+			},
+		
+		"type": {
+			operator: "ANY_OF",
+			searchValue: ["_invoice"]
+		},
+		customFieldList: {
+			customField: [
+					
+          	{
+				scriptId: p('integrationStatusCustomField') as String,
+				operator: p('integrationStatusOperator') as String,
+				searchValue: (p('integrationStatusInternalIds') splitBy(',')) map {
+					internalId: $
+				}  as Object {class: "org.mule.module.netsuite.extension.api.ListOrRecordRef" }
+			} as Object {class: "org.mule.module.netsuite.extension.api.SearchMultiSelectCustomField"} ]
+		} as Object {class: "org.mule.module.netsuite.extension.api.SearchCustomFieldList"}
+	}
+} as Object {
+	class : "org.mule.module.netsuite.extension.api.TransactionSearch"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="cd3bd47c-db37-4023-94f7-bb97804ce209" message="--------------------INVOKING NETSUITE TO GET INVOICES------------------------"/>
+		<netsuite:search doc:name="Search Invoices" doc:id="d04980d9-eae0-4649-ae66-d3d433b05ad1" config-ref="NetSuite_Config" key="TRANSACTION" pageSize="10"/>
+		<ee:transform doc:name="Set Internal Ids" doc:id="b6ebc5af-d7db-441b-a1aa-bfb936a0b194" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+	
+	"internal-id": $.internalId
+	
+	}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="48c37e3c-f2c8-4159-8577-5877eeab7d33" >
+			<when expression='#[sizeOf(payload."internal-id" default []) &gt; 0]'>
+				<foreach doc:name="For Each batch" doc:id="10850de6-5fb9-4321-881a-b48370216943" batchSize="${batch.size}">
+					<logger level="INFO" doc:name="Logger" doc:id="b8e7b454-52a6-4309-aaa9-06d6fe552c77" message="-------------GETTING ITEMS FROM NS---------------"/>
+					<flow-ref doc:name="getNetSuiteItems" doc:id="2d73c8a3-a79d-42e3-964d-77f0fd80392d" name="get-NetSuite-Items"/>
+					<logger level="INFO" doc:name="Logger" doc:id="9611ba7f-a370-4c61-b5fd-e88f9b686bc1" message="-------------GETTING ITEMS FROM SALESFORCE---------------"/>
+					<flow-ref doc:name="Flow Reference" doc:id="14c601cb-9746-4fb7-8d3e-696c98a134ea" name="get-Salesforce-Items"/>
+					<ee:transform doc:name="Find Diff" doc:id="aec55f6f-df80-430d-942e-33cc947e401c">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+	
+	vars.NS_Summary.NS_summary map (item,index) -> 
+{ 
+    "result": (item."total-Items" - ((vars.SF_Summary.SF_summary filter (it,in) -> it."internal-id" == item."internal-Id")[0]."items" default 0)),
+    "internal-id":item."internal-Id"
+   
+}
+	
+]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<logger level="DEBUG" doc:name="Logger" doc:id="fc7da76f-9b6f-4aeb-bfe9-83ec68c28872" message="#[payload]"/>
+					<ee:transform doc:name="Final Internal Ids" doc:id="a51bfab4-07db-4e63-9a3c-2b43324cd8bc">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+
+payload filter (value, index) -> (value.result != 0)]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<ee:transform doc:name="set Final Internal Ids" doc:id="3b9c8050-530a-4f34-8e94-c61dfdcea81e">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload."internal-id"]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<choice doc:name="Choice" doc:id="994f402f-d1eb-4d24-a79f-b92269c92c4d" >
+						<when expression="#[isEmpty(payload)]">
+							<logger level="INFO" doc:name="Logger" doc:id="55d9e941-b282-4464-8e58-7e1a5cd9006c" message="---------------NO INVOICES TO REPROCESS--------------" />
+						</when>
+						<otherwise>
+							<logger level="INFO" doc:name="Logger" doc:id="1065987e-13b1-471a-91c5-38f996254453" message="'-----------------THE INTERNAL IDS BEING SENT FOR REPROCESSING----------&gt;' #[payload] '----------------------" />
+							<http:request method="POST" doc:name="Request" doc:id="ac28fbd5-e448-46d8-b654-4c648bc4270e" config-ref="HTTP_Request_Main_API" path="/loadInvoices" />
+							<logger level="INFO" doc:name="Logger" doc:id="15897fa3-6865-49e4-972b-ed5fc70c9ef0" message='"---------------RESPONSE CODE RETURNED FROM MAIN LOAD INVOICES API---------------- " #[attributes.statusCode]-----------' />
+						</otherwise>
+					</choice>
+				</foreach>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log No Records Found" doc:id="7f0c4b95-825c-45b6-82dd-acec404928f6" message='#["-------------NO RECORDS TO REPROCESS----------------"]'/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="e1b249ff-cfc5-4979-b9fa-fcb6aef465bd" message="----------------------------(END OF FLOW)-----------------------------"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="2e68dc4b-858a-46ca-a6e6-09680262a5b3" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="5daa7b65-a683-4dfc-a5d0-dfd23e1470a9" message="#[error.errorMessage]"/>
+			</on-error-propagate>
+		</error-handler>
+		
+	</flow>
+	<flow name="get-NetSuite-Items" doc:id="f44c9f92-0ec2-492b-b390-d3411dfae8dd" >
+		<ee:transform doc:name="Transform Message" doc:id="f92d73e8-6347-4155-85e6-46179bfdc440" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map ({
+	internalId: $."internal-id",
+	"type": "INVOICE"
+} as Object {
+	class : "org.mule.module.netsuite.extension.api.RecordRef"
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<netsuite:get-list doc:name="Get list" doc:id="a8388445-5399-43ef-8b13-5769c105be5b" doc:description="Get List" config-ref="NetSuite_Config" />
+		<ee:transform doc:name="Transform Message" doc:id="c1cc3f74-3856-4c59-9b16-c72946794587" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+fun exludeItems(itemList) = itemList splitBy(',')
+---
+payload map {
+	nsInternalId: $.internalId,
+	nsTranDate: $.tranDate,
+	sfdcInvoiceId:  ($.customFieldList.customField groupBy $.scriptId).custbody14.value[0],
+	
+	nsItems: $.itemList.item map {
+		nsItem: $.item.name,
+		nsItemInternalId: $.item.internalId,
+		nsLineId: $.line as Number,
+		nsItemNo: ($.customFieldList.customField groupBy $.scriptId).custcol1.value[0]
+	} filter (not ((exludeItems(p('excludeItemList')) contains $.nsItemInternalId))),
+	
+	
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="set NS_Summary" doc:id="a5be052d-26b8-4e26-a466-ebc4aeab078c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+NS_summary: payload map {
+	
+	"internal-Id": $.nsInternalId,
+	"SFDCInvoice-Id":$.sfdcInvoiceId,
+	"total-Items": if($.nsItems?) sizeOf ($.nsItems) else "0" 
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="NS_Summary" ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+NS_summary: payload map {
+	
+	"internal-Id": $.nsInternalId,
+	"SFDCInvoice-Id":$.sfdcInvoiceId,
+	"total-Items": if($.nsItems?) sizeOf ($.nsItems) else "0" 
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="cad69f00-777a-43e6-9de0-8509881464c3" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="04b3dc1c-bdf0-4e0e-9bcd-130c77584a64" message="#[error.errorMessage]"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="get-Salesforce-Items" doc:id="ea8be91a-5d34-48fc-9729-ba861cbd6130" >
+		<set-variable value='#[payload.NS_summary."internal-Id"]' doc:name="Set NS Internal Ids" doc:id="bca98520-bdd3-432f-8ff3-1bfb3c0e5a70" variableName="sfdcInvoiceId"/>
+		<choice doc:name="Choice" doc:id="0263922d-e139-4377-8f6f-2377a078e9ef" >
+			<when expression="#[sizeOf(vars.sfdcInvoiceId default 0) &gt; 1]">
+				<ee:transform doc:name="create multiple SF Invoice Ids" doc:id="9024575e-70ff-4e8c-be5d-9d0a67820ff1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="sfdcInvoiceId" ><![CDATA[%dw 2.0
+output application/json
+---
+
+
+
+"(" ++ ( vars.sfdcInvoiceId map "'$'" joinBy ",") ++ ")"
+
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<salesforce:query doc:name="get-SFDC-Items-By-sfdcInvoiceIds" doc:id="3281eb2b-d54b-4ae9-872c-0db6099798b6" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[SELECT Account_NetSuite_Id__c,Netsuite_Internal_ID__c, (Select Id from Items__r) FROM Invoice__c where Netsuite_Internal_ID__c in :invoiceId]]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	invoiceId : vars.sfdcInvoiceId
+}]]]></salesforce:parameters>
+		</salesforce:query>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="create single SF Invoice Id" doc:id="9d1e2906-54bf-4fae-b408-925904bf78f7" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="sfdcInvoiceId" ><![CDATA[%dw 2.0
+output application/json
+---
+
+
+
+(vars.sfdcInvoiceId[0] default '' as String)
+
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<salesforce:query doc:name="get-SFDC-Items-By-sfdcInvoiceId" doc:id="1b840230-2ecc-49c3-b67b-3f99516bebd5" config-ref="Salesforce_Config" >
+					<salesforce:salesforce-query ><![CDATA[SELECT Account_NetSuite_Id__c,Netsuite_Internal_ID__c, (Select Id from Items__r) FROM Invoice__c where Netsuite_Internal_ID__c = ':invoiceId']]></salesforce:salesforce-query>
+					<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	invoiceId : vars.sfdcInvoiceId
+}]]]></salesforce:parameters>
+				</salesforce:query>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform SF_Summary" doc:id="e3c0972d-dc21-4294-b45b-06e898ac1dcf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+
+"SF_summary": payload map {
+	"internal-id": $.Netsuite_Internal_ID__c,
+	"items": if($.Items__r?) sizeOf($.Items__r default "") else "0"
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="SF_Summary" ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+
+"SF_summary": payload map {
+	"internal-id": $.Netsuite_Internal_ID__c,
+	"items": if($.Items__r?) sizeOf($.Items__r default "") else "0"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b4348df6-98d2-443d-be2c-5902b95982e8" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="f2d1245e-7ef1-45ca-a73d-2533f060527f" message="#[error.errorMessage]"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

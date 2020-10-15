@@ -1,0 +1,19 @@
+{
+  "sampleData": {
+    "bbadf4c1-26cf-452a-b823-bb982ce36c03": {
+      "payload": "sample_data/defaultbinarytype_1.json"
+    },
+    "3aac7369-5308-448a-a130-b82e45a4d7bd": {
+      "payload": "sample_data/defaultbinarytype.csv"
+    },
+    "a2d6e719-3f50-444c-8ef5-f7b6ace0d8f0": {
+      "payload": "sample_data/defaultbinarytype.json"
+    },
+    "b994bb2c-e9d6-42b3-90bc-7816d565407a": {
+      "payload": "sample_data/unknown.xlsx"
+    },
+    "24f07366-c7b8-4e62-9026-2bb321415e1e": {
+      "payload": "sample_data/list_json.json"
+    }
+  }
+}

@@ -19,7 +19,7 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 		<ee:transform doc:name="Transform Message" doc:id="6d876fdc-abad-4a71-bb18-53b6005f385e">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
-output application/java
+output application/json
 ---
 payload]]></ee:set-payload>
 				</ee:message>
@@ -66,6 +66,14 @@ import * from dw::core::Arrays
 output application/java
 ---
 payload divideBy 50]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="d9bb7cc4-0c4f-4e8b-a9dc-6f49f43b553a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<vm:publish doc:name="Publish" doc:id="8b6f7449-64ae-4e1f-8311-711916bbf3a7" config-ref="VM_Config" queueName="one-time-invoice-vm"/>
@@ -130,7 +138,7 @@ output application/json
 		<ee:transform doc:name="Transform Message" doc:id="903ab486-d471-4796-a667-8f000be3ad08">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
-output application/java
+output application/json
 ---
 payload]]></ee:set-payload>
 			</ee:message>
