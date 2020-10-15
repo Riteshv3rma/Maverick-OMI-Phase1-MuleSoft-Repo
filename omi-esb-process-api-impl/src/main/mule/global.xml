@@ -20,7 +20,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<configuration-properties file="common.properties" doc:name="Configuration properties" />
 	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config"  file="${mule.env}.properties" key="${vault.secret}" />
 	<http:request-config name="HTTP_NetSuite_Request_configuration" doc:name="HTTP Request configuration" doc:id="5289ff8a-bd17-4907-aa20-dfe1b78c74f2" basePath="${secure::http.netsuite.api}" responseTimeout="${secure::http.responseTimeOut}">
-		<http:request-connection host="${secure::http.netsuite.host}" port="${secure::http.netsuite.port}" >
+		<http:request-connection host="${secure::http.netsuite.host}" port="${secure::http.netsuite.port}">
 			<reconnection>
 				<reconnect-forever frequency="${secure::reconnection.frequency}"/>
 			</reconnection>

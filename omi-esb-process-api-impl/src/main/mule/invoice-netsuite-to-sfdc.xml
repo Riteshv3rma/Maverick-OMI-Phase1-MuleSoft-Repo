@@ -11,11 +11,12 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 	<flow name="invoice-netsuite-to-sfdcFlow" doc:id="379675ce-4054-4256-87a1-13f07b4f5cf6">
-		<scheduler doc:name="Scheduler" doc:id="66431d54-74f3-4f14-9c4c-f0668f6689d3" >
+		<scheduler doc:name="Scheduler" doc:id="cc9ea011-214f-4c67-82e4-6851825f004b" >
 			<scheduling-strategy >
 				<cron expression="${invoice.netsuite.sfdc.cron}" />
 			</scheduling-strategy>
 		</scheduler>
+		<logger level="INFO" doc:name="Logger" doc:id="87b89caf-2ac9-4f85-a9c0-ca5e1617c48c" message="----------Received Request------------"/>
 		<flow-ref doc:name="getInvoicesFlow" doc:id="6c8a0440-5649-48c3-91cb-7658239850ff" name="getInvoicesFlow" target="getInvoiceResult" targetValue="#[payload]"/>
 		<ee:transform doc:name="Set transactionStats" doc:id="d52ad138-b438-4925-98a3-1c2fcc9dd719" doc:description="Set transactionStats">
 			<ee:message>

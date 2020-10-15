@@ -2,6 +2,9 @@
   "sampleData": {
     "ee9e8e4f-160b-4f2a-a7a6-e4a9b9912537": {
       "payload": "sample_data/unknown.dwl"
+    },
+    "343dc236-dc12-4e1f-8b4d-ea4a6d170394": {
+      "payload": "sample_data/unknown_1.dwl"
     }
   }
 }
