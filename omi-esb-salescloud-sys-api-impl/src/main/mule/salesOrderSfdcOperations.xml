@@ -54,7 +54,7 @@ payload]]></ee:set-payload>
 </flow>
 	<flow name="getSalesOrderInSfdcByStatusFlow" doc:id="0aaac8ce-7f1c-4df4-bbd7-05d5bf189d80" >
 	<salesforce:query config-ref="Salesforce_Sfdc_config" doc:name="Get Samples SFDC Query by Status_for_Sync__c">
-				<salesforce:salesforce-query>Select Id,Name, (SELECT Id, Name, Samples__c, Products_Name__c, Product_Name_Sync__c ,Item_No__c, Product_External_Id__c, Quantity__c FROM Products__r),Status_for_Sync__c,SalesRep_External_Id__c,Account_Name__c,Account_Address__c,Address_2__c,Zip__c,Country__c,Mailing_Address__c,City__c,Attention_To__c,State__c,Company_Name__c,Contact_Phone__c,Notes__c,Brand__c,Division__c,PO_Num__c  from Samples__c where Status_for_Sync__c IN :status</salesforce:salesforce-query>
+				<salesforce:salesforce-query><![CDATA[Select Id,Name, (SELECT Id, Name, Samples__c, Products_Name__c, Product_Name_Sync__c ,Item_No__c, Product_External_Id__c, Quantity__c FROM Products__r),Status_for_Sync__c,SalesRep_External_Id__c,Account_Name__c,Account_Address__c,Address_2__c,Zip__c,Country__c,Country_Name__C,Mailing_Address__c,City__c,Attention_To__c,State__c,Company_Name__c,Contact_Phone__c,Notes__c,Brand__c,Division__c,PO_Num__c  from Samples__c where Status_for_Sync__c IN :status]]></salesforce:salesforce-query>
 			<salesforce:parameters><![CDATA[#[output application/java
 ---
 {
@@ -69,5 +69,7 @@ output application/json
 payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-	</flow>
+		<logger level="INFO" doc:name="Logger" doc:id="ea3b2411-d790-4b8b-ab5c-1832a974e8ec" message="---------------------------------RESPONSE FROM SF SYSTEM-----------------------------&gt; #[payload]"/>
+	
+</flow>
 </mule>

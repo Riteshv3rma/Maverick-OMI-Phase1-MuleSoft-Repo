@@ -178,6 +178,14 @@ output application/java
 ---
 payload map {
 	Account_NetSuite_Id__c: $.nsCustomerId,
+	Invoice_Company_Ship_To__c:$.nsAddressee,
+	Invoice_Attention_To__c:$.nsAttention,
+	Shipping_Address_1__c:$.nsAddress1,
+	Shipping_Address_2__c:$.nsAddress2,
+	Shipping_CIty__c:$.nsCity,
+	Shipping_State_Province__c:$.nsState,
+	Shipping_Zip_Postal_Code__c:$.nsZip,
+	Shipping_Country__c:$.nsCountry,
 	Netsuite_Internal_ID__c: $.nsInternalId,
 	Invoice__c: $.nsInvoiceNum,
 	Transaction__c: $.nsTranNum,
@@ -213,6 +221,7 @@ output application/json
 "(" ++ (((p('secure::salesorder-staus') splitBy (',')) map ("'" ++ $ ++"'")) joinBy ",") ++ ")"]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="bf83fbe9-b246-4825-bddc-4cbbae5f83c9" message="--------------REQUEST RECEIVED IN SALESFORCE SYSTEM API--------------&gt; #[payload]"/>
 		<flow-ref doc:name="getSalesOrderInSfdcByStatusFlow" doc:id="ef040a7e-3866-4184-9063-a35021aa6e3c" name="getSalesOrderInSfdcByStatusFlow"/>
     </flow>
     <flow name="get:\sales\customers\(customerNum):omi-esb-sync-salescloud-api-config">
