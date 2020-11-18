@@ -4,7 +4,7 @@
 
 	<groupId>com.omi</groupId>
 	<artifactId>omi-esb-salescloud-sys-api-impl</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.3-SNAPSHOT</version>
     <packaging>mule-application</packaging>
 
 	<name>omi-esb-salescloud-sys-api-impl</name>
@@ -14,7 +14,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<app.runtime>4.3.0</app.runtime>
-		<mule.maven.plugin.version>3.1.6</mule.maven.plugin.version>
+		<mule.maven.plugin.version>3.3.5</mule.maven.plugin.version>
 	</properties>
 
 	<build>
