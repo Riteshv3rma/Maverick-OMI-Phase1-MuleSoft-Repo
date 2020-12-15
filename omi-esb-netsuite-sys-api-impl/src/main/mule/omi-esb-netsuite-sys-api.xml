@@ -214,4 +214,15 @@ output application/java
     <flow name="post:\netsuite\salesorder:omi-esb-netsuite-sys-api-config">
 		<flow-ref doc:name="createSalesOrderFlow" doc:id="c3d4457d-07ed-4c2d-add8-2a049d75051f" name="createSalesOrderFlow"/>
     </flow>
+	<flow name="get:\netsuite\credit-memo" doc:id="6d0f8ed1-2db4-44d7-8bc4-01d6aa79af01" >
+		<flow-ref doc:name="Flow Reference" doc:id="f3c44c7e-7f02-45ff-a8e0-3754afd27bbe" name="get-credit-memo-Flow"/>
+	</flow>
+	<flow name="post:\netsuite\credit-memo" doc:id="f3c3150e-9d01-421d-9396-f03d491e076b" >
+		<flow-ref doc:name="Flow Reference" doc:id="475665f4-857b-4751-90ed-a9f4225bfc96" name="get-credit-memo-by-id" />
+	</flow>
+	<flow name="patch:\netsuite\credit-memo\(internalId):application\json:omi-esb-netsuite-sys-api-config" doc:id="34a10d9f-f85c-43e2-9c3c-07e5f7c90036" >
+		<flow-ref doc:name="updateCreditMemoFlow" doc:id="4dad4557-4acf-4c7e-a06c-83e5133f9e9c" name="updateCreditMemoFlow" />
+		<logger level="INFO" doc:name="Logger" doc:id="79224dea-27d0-4a3d-972b-dcf3ced4b05d" message="payload after updating credit memo = #[payload]" />
+	</flow>
+
 </mule>

@@ -235,4 +235,44 @@ traits:
                       "message": "Resource not found"
                     }
       
+    /credit-memo:
+             
+      get:
+        displayName: Get credit memo
+        description: |
+          Retrieve credit memo from NetSuite.
+        is: [ invoiceSearch ]      
+        responses:
+          200:
+            body:
+              application/json: 
+      post:
+        displayName: Get list of credit-memos
+        description: |
+          Get list of credit-memos
+        body:
+          application/json:
+        responses:
+          201:
+            description: Get list of credit-memos
+            body:
+              application/json:
+      
+      /{internalId}:
+       patch:
+          displayName: Update credit memo by id
+          description: Update credit memo specified by ID
+          body:
+            application/json:
+          responses:
+            200:
+              body:
+                application/json:
+            404:
+              body:
+                application/json:
+            422:
+              description: Unprocessable entity
+              body:
+                application/json:
       
