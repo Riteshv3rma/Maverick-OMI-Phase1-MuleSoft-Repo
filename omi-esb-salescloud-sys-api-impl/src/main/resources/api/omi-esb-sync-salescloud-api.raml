@@ -6,6 +6,20 @@ baseUri: http://localhost:8081/api
 /sales:
     description: |
         Working with salescloud Objects:
+    
+    /credit-memos:
+        post:
+          body:
+            application/json:
+          responses:
+            201:
+              description: Created
+              body:
+                application/json:
+                 example: |
+                        {
+                          "internalId": "123456"
+                        }
     /invoices:
         get:
             displayName: Get invoices

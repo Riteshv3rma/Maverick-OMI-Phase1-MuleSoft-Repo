@@ -305,4 +305,48 @@ payload]]></ee:set-payload>
 		</ee:transform>
 		<flow-ref doc:name="deleteItemsSub_Flow" doc:id="b710b269-8ba0-4f0d-9265-4084957a786e" name="deleteItemsSub_Flow"/>
     </flow>
+	<flow name="post:\sales\credit-memos:omi-esb-sync-salescloud-api-config" doc:id="77df5404-5319-4c47-80f0-784a2769752b" >
+		<ee:transform doc:name="Transform Message" doc:id="9e12e5a2-e758-452e-b146-a7fbc2a89615" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+payload map {
+	Account_NetSuite_Id__c: $.nsCustomerId,
+	Credit_Memo_Company_Bill_To__c:$.nsAddressee,
+	Credit_Memo_Attention_To__c:$.nsAttention,
+	Billing_Address_1__c:$.nsAddress1,
+	Billing_Address_2__c:$.nsAddress2,
+	Billing_CIty__c:$.nsCity,
+	Billing_State_Province__c:$.nsState,
+	Billing_Zip_Postal_Code__c:$.nsZip,
+	Billing_Country__c:capitalize($.nsCountry replace /_/ with (" ")), 
+	Netsuite_Internal_ID__c: $.nsInternalId,
+	Credit_Memo__c: $.nsCreditMemoNum,
+	RecordTypeId:p('secure::sfdc.RecordTypeId'),
+	Transaction__c: $.nsTranNum,
+	(Date__c: ($.nsTranDate as Date )) if $.nsTranDate?,
+	Division__c: $.nsDivision,
+	Subtotal__c: if ($.nsSubtotal != null) $.nsSubtotal else 0.0,
+	Transaction_Discount__c: if ($.nsTransactionDiscount != null) $.nsTransactionDiscount else 0.0,
+	Tax__c: if ($.nsTax != null) $.nsTax else 0.0,
+	Shipping_Cost__c: if ($.nsShippingCost != null) $.nsShippingCost else 0.0,
+	Handling_Cost__c: if ($.nsHandlingCost != null) $.nsHandlingCost else 0.0,
+	Total__c: if ($.nsTotal != null) $.nsTotal else 0.0,
+	Amount_Due__c: if ($.nsAmountDue != null) $.nsAmountDue else 0.0,
+	Status__c: $.nsStatus
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="3e6bdd5a-c51c-4fc4-9336-3861e25763db" message="#[%dw 2.0
+
+output application/json
+---
+
+payload]"/>
+		<flow-ref doc:name="upsert-credit-memos-Sub_Flow" doc:id="4fcf2121-f0bc-406c-9b53-42a31a4ad4ca" name="upsertInvoiceSub_Flow" />
+		<logger level="INFO" doc:name="Logger" doc:id="1adeb15a-ec9d-4ad6-a1c5-ea6eb09fc657" message="upsert Credit Memo Response in SFDC= #[payload]" />
+	</flow>
 </mule>
