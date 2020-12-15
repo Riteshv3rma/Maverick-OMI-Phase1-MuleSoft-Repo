@@ -109,7 +109,7 @@ payload]]></ee:set-payload>
 			<http:uri-params ><![CDATA[#[output application/java
 ---
 {
-	"sfdcInvoiceId" : vars.sfdcInvoiceId
+	"sfdcInvoiceId" : vars."sfdcInvoiceId"
 }]]]></http:uri-params>
 
 		</http:request>
@@ -134,5 +134,30 @@ payload]]></ee:set-payload>
 		
 			
 </flow>
+	<sub-flow name="upsert-credit-memo-subflow" doc:id="bdd635a1-376d-4303-9eef-e51d12c4de66" >
+		<ee:transform doc:name="Transform Message" doc:id="ef5337af-82e9-430e-ae4f-84ae02d7438c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Request" doc:id="c2a4b708-862d-466a-ba74-c7e570f7710a" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/credit-memos" >
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="a3aaa9a5-9778-4752-8fe1-d631ed85494c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
 		
 	</mule>

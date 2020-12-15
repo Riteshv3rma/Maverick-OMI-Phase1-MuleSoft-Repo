@@ -27,7 +27,7 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 </reconnection>
 		</salesforce:basic-connection>
 	</salesforce:sfdc-config>
-	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="d236261b-c787-4c94-ab39-a88bfd83bef0" file="${mule.env}.properties" key="${vault.secret}" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="d236261b-c787-4c94-ab39-a88bfd83bef0" file="prd.properties" key="mulesoft12345678" />
 
 
 
