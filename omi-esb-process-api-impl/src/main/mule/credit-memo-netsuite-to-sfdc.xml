@@ -183,8 +183,8 @@ vars.itemPayload map {
 	Quantity__c: $.nsQuantity,
 	Units__c: $.nsUnits,
 	Description__c: $.nsDescription,
-	Unit_Price__c: $.nsUnitPrice,
-	Amount__c: $.nsAmount,
+	Unit_Price__c: if ($.nsUnitPrice != null) $.nsUnitPrice * -1 else 0.0,
+	Amount__c: if ($.nsAmount != null) $.nsAmount * -1 else 0.0,
 	//Department__c: $.nsDepartment,
 	Credit_Memo__r: {
 		'Netsuite_Internal_ID__c' : vars.internalId,
