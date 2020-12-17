@@ -4,7 +4,7 @@
 
 	<groupId>com.omi</groupId>
 	<artifactId>omi-esb-salescloud-sys-api-impl</artifactId>
-    <version>1.0.6-SNAPSHOT</version>
+    <version>1.0.9-SNAPSHOT</version>
     <packaging>mule-application</packaging>
 
 	<name>omi-esb-salescloud-sys-api-impl</name>
