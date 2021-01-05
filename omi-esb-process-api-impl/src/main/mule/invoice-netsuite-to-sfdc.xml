@@ -33,7 +33,7 @@ output application/json
 			</ee:variables>
 		</ee:transform>
 		<choice doc:name="Is any Invoice Eligible?" doc:id="ed2d3003-0e59-47ce-b6f3-771092f91a15" >
-			<when expression="#[sizeOf(vars.getInvoiceResult) == 0]">
+			<when expression="#[(vars.getInvoiceResult == null) or (sizeOf(vars.getInvoiceResult) == 0)]">
 				<logger level="INFO" doc:name="Logger" doc:id="3ed9ec1e-0c24-4c2c-8418-e1897f2267ea" message="eligible Invoices to be synced with SFDC= #[vars.getInvoiceResult.*nsInternalId]"/>
 			</when>
 			<otherwise >
@@ -158,7 +158,7 @@ payload.nsItems
 		<flow-ref doc:name="getSfdcItemsByInvoiceIdFlow" doc:id="dc1437fc-52a4-4c06-93e9-5c3f0e10e134" name="getSfdcItemsByInvoiceIdFlow" target="getSfdcItemByInvoiceIdResponse" targetValue="#[payload]"/>
 				<logger level="INFO" doc:name="Get_SF_Items_Logger" doc:id="8d1746af-0128-44c6-b42d-a3ef9c431af8" message="'-----------------SF GET() RESPONSE ON ITEMS FOR THE INVOICE---------------------' ++ #[vars.getSfdcItemByInvoiceIdResponse]"/>
 		<choice doc:name="Choice" doc:id="eed5a61b-929d-4dc9-8b23-f98d58f93076" >
-			<when expression="#[sizeOf(vars.getSfdcItemByInvoiceIdResponse) == 0]">
+			<when expression="#[(vars.getSfdcItemByInvoiceIdResponse == null) or (sizeOf(vars.getSfdcItemByInvoiceIdResponse) == 0)]">
 				<logger level="INFO" doc:name="Logger" doc:id="49670f5f-8cb7-4eec-bea4-2ce14c9b3cb6" message="---------------NO ITEMS FOUND IN SALESFORCE FOR THE GIVEN INVOICE------------------"/>
 			</when>
 			<otherwise >
@@ -216,7 +216,7 @@ payload filter $.Id != null]]></ee:set-variable>
 							
 </ee:transform>
 						<choice doc:name="Choice" doc:id="7e1fe727-e774-48db-bd64-be787f4f8d0a" >
-			<when expression="#[sizeOf(vars.getSfdcItemByInvoiceIdResponse) == 0]">
+			<when expression="#[(vars.getSfdcItemByInvoiceIdResponse == null) or (sizeOf(vars.getSfdcItemByInvoiceIdResponse) == 0)]">
 				<logger level="INFO" doc:name="Logger" doc:id="99448089-7857-449c-9037-3dc27b499198" message="Invoice creation scenario. No items found in SFDC."/>
 			</when>
 			<otherwise >
@@ -259,7 +259,7 @@ vars.deleteItemsPayload.*Id]]></ee:set-payload>
 		</choice>
 		<logger level="DEBUG" doc:name="Logger" doc:id="08573931-fe4a-4296-aaf8-61adf18c8d84" message="----------ITEMS TO BE CREATED IN SF= #[vars.createItemsPayload] ------------ITEMS TO BE UPDATED IN SFDC = #[vars.updateItemsPayload]"/>
 							<choice doc:name="Is createItemsPayload empty?" doc:id="c8134d24-e0dd-4cdd-b016-72b8d8e4db07" doc:description="Is createItemsPayload empty?">
-							<when expression="#[sizeOf(vars.createItemsPayload) == 0]">
+							<when expression="#[(vars.createItemsPayload == null) or (sizeOf(vars.createItemsPayload) == 0)]">
 								<logger level="INFO" doc:name="Logger" doc:id="cfa88710-3465-47b1-8094-b3817d3558e7" message="----------NO ITEMS TO CREATE FOR THIS INVOICE------------"/>
 							</when>
 							<otherwise >
@@ -277,7 +277,7 @@ vars.createItemsPayload]]></ee:set-payload>
 							</otherwise>
 						</choice>
 							<choice doc:name="Is updateItemsPayload empty?" doc:id="bcff240b-651e-4090-a6d2-5bfbeca76ac3" doc:description="Is updateItemsPayload empty?">
-							<when expression="#[sizeOf(vars.updateItemsPayload) == 0]">
+							<when expression="#[(vars.updateItemsPayload==null) or (sizeOf(vars.updateItemsPayload) == 0)]">
 								<logger level="INFO" doc:name="Logger" doc:id="336d2fb8-5400-4611-bd07-81eaf94f3d13" message="updateItemsPayload is empty."/>
 							</when>
 							<otherwise >
