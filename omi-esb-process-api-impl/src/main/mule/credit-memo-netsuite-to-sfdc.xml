@@ -34,7 +34,7 @@ output application/json
 		</ee:transform>
 		<choice doc:name="Is any Invoice Eligible?" doc:id="ed2d3003-0e59-47ce-b6f3-771092f91a15" >
 			<when expression='#[(vars."credit-memos" == null) or (sizeOf(vars."credit-memos") == 0)]'>
-				<logger level="INFO" doc:name="Logger" doc:id="3ed9ec1e-0c24-4c2c-8418-e1897f2267ea" message="eligible Invoices to be synced with SFDC= #[vars.getInvoiceResult.*nsInternalId]"/>
+				<logger level="INFO" doc:name="Logger" doc:id="3ed9ec1e-0c24-4c2c-8418-e1897f2267ea" message="eligible credit memos to be synced with SFDC= #[vars.getInvoiceResult.*nsInternalId]"/>
 			</when>
 			<otherwise >
 				<logger level="INFO" doc:name="Logger" doc:id="1d7a7e00-0c33-47ba-958f-023cda6d2398" message='eligible credit-memos to be synced with SFDC= #[vars."credit-memos".*nsInternalId]' />
@@ -49,7 +49,8 @@ vars."credit-memos" map {
 			</ee:message>
 		</ee:transform>
 				<flow-ref doc:name="get-credit-memo-ById" doc:id="b3317cfb-c90d-4893-8eac-e56626eea00b" name="get-credit-memos-by-id"/>
-		<set-variable value="#[output application/json
+		<logger level="INFO" doc:name="Logger" doc:id="9c22e484-73d0-471c-83de-7754f5c21d01" message="------------GOT RECORDS FROM NS---------------"/>
+				<set-variable value="#[output application/json
 ---
 payload map ( payload01 , indexOfPayload01 ) -&gt; {
 	nsInternalId: payload01.nsInternalId,
@@ -102,6 +103,7 @@ output application/json
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="5d02c5bc-db14-46b4-a82c-38f2440de9e8" message="-----------ERROR IN THE CREDIT MEMO MAIN FLOW. SENDING EMAIL----------------"/>
 				<flow-ref doc:name="send-email-notificationFlow" doc:id="6a66580a-370d-48fc-a49c-7a52c3fc1bae" name="send-email-notificationFlow"/>
 
 			</on-error-continue>
@@ -149,8 +151,8 @@ payload.nsItems
 					</ee:transform>
 		<flow-ref doc:name="upsert-credit-memo-SF" doc:id="c2d40ca5-8f8e-4b40-bf43-961dd1e1b370" name="upsert-credit-memo-subflow" target="upsertCreditMemoResult"/>
 						<validation:is-false doc:name="Is credit memo successfully upserted in SFDC?" doc:id="98ff55eb-aa31-46f0-87ea-0490f13c0c0f" expression='#[vars."upsertCreditMemoResult".*success contains false]' message="Error while upserting credit memo in SFDC."/>
-						<set-variable value="#[vars.upsertCreditMemoResult[0].id]" doc:name="Set sfdcCreditMemoId" doc:id="86b8d1e5-60a9-4897-b5d6-39c6f6e58a1d" variableName="sfdcInvoiceId"/>
-		<flow-ref doc:name="getSfdcItemsByCreditMemoFlow" doc:id="dc1437fc-52a4-4c06-93e9-5c3f0e10e134" name="getSfdcItemsByInvoiceIdFlow" target="getSfdcItemByCreditMemoResponse"/>
+						<set-variable value="#[vars.upsertCreditMemoResult[0].id]" doc:name="Set sfdcCreditMemoId" doc:id="86b8d1e5-60a9-4897-b5d6-39c6f6e58a1d" variableName="sfdcCreditMemoId"/>
+		<flow-ref doc:name="getSfdcItemsByCreditMemoFlow" doc:id="dc1437fc-52a4-4c06-93e9-5c3f0e10e134" name="getSfdcItemsByCreditMemoIdFlow" target="getSfdcItemByCreditMemoResponse"/>
 		<choice doc:name="Choice" doc:id="eed5a61b-929d-4dc9-8b23-f98d58f93076" >
 			<when expression="#[(vars.getSfdcItemByCreditMemoResponse == null) or (sizeOf(vars.getSfdcItemByCreditMemoResponse) == 0)]">
 				<logger level="INFO" doc:name="Logger" doc:id="49670f5f-8cb7-4eec-bea4-2ce14c9b3cb6" message="---------------NO ITEMS FOUND IN SALESFORCE FOR THE GIVEN INVOICE------------------"/>
@@ -342,7 +344,7 @@ output application/json
 total: vars.transactionStats.total,
 success: vars.transactionStats.success,
 fail: vars.transactionStats.fail as Array ++ [{ id: vars.internalId,
-	CreditMemoNumber: vars."credit-memos",
+	CreditMemoNumber: vars."credit-memo-num",
 	errorMessage: vars.errorDescription
 }]
 

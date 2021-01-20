@@ -88,7 +88,23 @@ payload]]></ee:set-payload>
 		<http:request method="GET" doc:name="Get_Request_NetSuite" doc:id="60ae256f-2894-4a4c-8a93-8f14787b8487" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/credit-memo" />
 	</flow>
 	<flow name="get-credit-memos-by-id" doc:id="e00d0a40-699b-496f-a003-2dca35eb0b58" >
-		<http:request method="POST" doc:name="Post_Request_NetSuite" doc:id="cf9392ff-7b96-4243-b779-7de40dacb814" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/credit-memo" />
+		<ee:transform doc:name="Transform Message" doc:id="5a62f0a1-385b-4ce6-b97d-e8d7acd2b82d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Post_Request_NetSuite" doc:id="cf9392ff-7b96-4243-b779-7de40dacb814" config-ref="HTTP_NetSuite_Request_configuration" path="/netsuite/credit-memo"/>
+		<ee:transform doc:name="Transform Message" doc:id="e90555bb-98d1-469c-9bb0-95f09bed543a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</flow>
 	<flow name="updateCreditMemoFlow" doc:id="e21c38ab-2f93-4c7d-bd8a-c704734993fa" >
 		<ee:transform doc:name="Transform Message" doc:id="512d66da-09b4-43bc-9824-138096651bb2" >

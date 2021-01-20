@@ -159,5 +159,14 @@ payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 	</sub-flow>
+	<flow name="getSfdcItemsByCreditMemoIdFlow" doc:id="c8af948a-6a57-47b4-aee4-e2d4479c2bf5" >
+		<http:request method="GET" doc:name="Request" doc:id="043e63f3-3bf8-4e3d-8e2c-bb1dc4200f0e" config-ref="HTTP_SalesCloud_Request_configuration" path="/sales/credit-memos/items/{sfdcCreditMemoId}" >
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"sfdcCreditMemoId" : vars."sfdcCreditMemoId"
+}]]]></http:uri-params>
+		</http:request>
+	</flow>
 		
 	</mule>
