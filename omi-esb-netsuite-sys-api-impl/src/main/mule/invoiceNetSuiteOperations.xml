@@ -10,7 +10,10 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	
 	<flow name="get-credit-memo-by-id" doc:id="ccdbf223-057b-4d6e-9bbf-4676c30774cc" >
-		<ee:transform doc:name="Transform Message" doc:id="4ed8efdd-e7fe-4004-8b99-26ef93b3128f">
+		<logger level="INFO" doc:name="Logger" doc:id="7f81285f-417d-4fad-9697-38cf07a7556e" message="---------------GET CREDIT MEMO BY ID FLOW TRIGGERED------------------"/>
+		<set-variable value="#[[]]" doc:name="Set Variable" doc:id="099936de-22c0-4832-a9e9-e5a2952e9d55" variableName="credit-memos"/>
+		<foreach doc:name="For Each" doc:id="c40e1b9f-2543-46cb-9d5a-7c329f6f0194" collection="#[payload]" batchSize="${secure::net.creditMemo.batchsize}">
+			<ee:transform doc:name="Transform Message" doc:id="4ed8efdd-e7fe-4004-8b99-26ef93b3128f">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -20,13 +23,16 @@ payload map ({
 	"type": "CREDIT_MEMO"
 } as Object {
 	class : "org.mule.module.netsuite.extension.api.RecordRef"
-})]]></ee:set-payload>
+})
+]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<netsuite:get-list doc:name="Get list" doc:id="95d35540-5fba-4bdf-b890-5065da46213c" doc:description="Get List" config-ref="NetSuite_Config" />
-		<ee:transform doc:name="Transform Message" doc:id="c7c5097b-8469-4990-9c3e-9c5569109bad">
+			<netsuite:get-list doc:name="Get list" doc:id="95d35540-5fba-4bdf-b890-5065da46213c" doc:description="Get List" config-ref="NetSuite_Config" />
+			<ee:transform doc:name="Transform Message" doc:id="c7c5097b-8469-4990-9c3e-9c5569109bad">
 			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
+			</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="final-payload" ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
 fun exludeItems(itemList) = itemList splitBy(',')
 ---
@@ -71,9 +77,33 @@ payload map {
 	nsStatus: $.status
 	
 	
-}]]></ee:set-payload>
+}]]></ee:set-variable>
+				</ee:variables>
+		</ee:transform>
+			<ee:transform doc:name="Transform Message" doc:id="4e7f6bb0-6f02-4bbf-bf07-7236ef9d7c70" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="credit-memos" ><![CDATA[%dw 2.0
+output application/json
+---
+vars."credit-memos" ++ vars."final-payload"]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="eb47d388-dd9b-479e-a5dd-916f79a95df2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars."credit-memos"]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6152102f-8e6d-4c85-a109-46baebd86fca" >
+				<logger level="INFO" doc:name="Logger" doc:id="2e77af2a-a267-4688-b9a8-79f8839cb046" message="#[error.description]"/>
+			</on-error-continue>
+		</error-handler>
 	</flow>
 	<flow name="getInvoiceByIdFlow" doc:id="f905e80c-4a92-4344-9316-163bc6b664f0" >
 		<ee:transform doc:name="Transform Message" doc:id="2d026b34-1c4f-4b58-8b0c-e0376cab5aec" >

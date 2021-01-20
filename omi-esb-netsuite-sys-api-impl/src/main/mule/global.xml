@@ -8,7 +8,7 @@
 http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
 	    <http:listener-config name="omi-esb-netsuite-sys-api-httpListenerConfig">
-        <http:listener-connection host="${secure::http.omi.host}" port="${secure::http.omi.port}" />
+        <http:listener-connection host="${secure::http.omi.host}" port="${secure::http.omi.port}" connectionIdleTimeout="300000"/>
     </http:listener-config>
     <apikit:config name="omi-esb-netsuite-sys-api-config" raml="omi-esb-netsuite-sys-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" api="api\omi-esb-netsuite-sys-api.raml"/>
     <secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config"  file="${mule.env}.properties" key="${vault.secret}" />
