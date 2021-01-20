@@ -150,5 +150,23 @@ vars.sfdcInvoiceResponse.*Id]]></ee:set-payload>
 			</otherwise>
 		</choice>
 	</flow>
+	<flow name="getSfdcItemsByCreditMemoIdFlow" doc:id="f1f74320-2541-4a9e-9aa6-461368519d6c" >
+		<salesforce:query doc:name="Get SFDC Items By CreditMemoId" doc:id="610819ac-2986-449a-a028-62e56e4ae01a" config-ref="Salesforce_Sfdc_config" >
+			<salesforce:salesforce-query ><![CDATA[Select Id,Name, Line_Id__c  from Item__c where Credit_Memo__c = ':sfdcCreditMemoId' ]]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	sfdcCreditMemoId : vars.sfdcCreditMemoId
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="2aee2323-3007-4048-9991-3febe20cbd9e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
 
 	</mule>

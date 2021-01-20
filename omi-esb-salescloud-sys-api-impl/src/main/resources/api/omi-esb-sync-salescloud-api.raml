@@ -20,6 +20,33 @@ baseUri: http://localhost:8081/api
                         {
                           "internalId": "123456"
                         }
+    
+    
+    
+        /items:
+          /{sfdcCreditMemoId}:
+            uriParameters:
+              sfdcCreditMemoId:
+                type: string | integer
+                example: "a17J0000008ha6hIAA"
+                description: Represents the item Number of native system
+                
+            get:
+              responses:
+                 200:
+                    body:
+                      application/json:
+                 400:
+                  body:
+                    application/json:
+                      example: |
+                        {
+                          "message": "Resource not found"
+                        }                                       
+
+     
+    
+    
     /invoices:
         get:
             displayName: Get invoices
@@ -178,7 +205,16 @@ baseUri: http://localhost:8081/api
                       example: |
                         {
                           "message": "Resource not found"
-                        }                        
+                        }
+                        
+                                                
+                                                                        
+                                                                                                
+       
+            
+
+
+
 
     /customers:
         get:

@@ -15,7 +15,11 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 	</http:listener-config>
 	<apikit:config name="omi-esb-sync-salescloud-api-config"
 		raml="omi-esb-sync-salescloud-api.raml" outboundHeadersMapName="outboundHeaders"
-		httpStatusVarName="httpStatus" api="api\omi-esb-sync-salescloud-api.raml"/>
+		httpStatusVarName="httpStatus" api="api\omi-esb-sync-salescloud-api.raml" parser="RAML">
+		<apikit:flow-mappings >
+			<apikit:flow-mapping resource="/sales/credit-memos/items/{sfdcCreditMemoId}" action="get" flow-ref="get:\sales\credit-memos\items\(sfdcCreditMemoId):omi-esb-sync-salescloud-api-config" />
+		</apikit:flow-mappings>
+	</apikit:config>
 	<salesforce:sfdc-config name="Salesforce_Sfdc_config"
 		doc:name="Salesforce Sfdc config">
 		<salesforce:basic-connection password="${secure::sfdc.password}"
@@ -27,7 +31,7 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 </reconnection>
 		</salesforce:basic-connection>
 	</salesforce:sfdc-config>
-	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="d236261b-c787-4c94-ab39-a88bfd83bef0" file="${mule.env}.properties" key="${vault.secret}" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="d236261b-c787-4c94-ab39-a88bfd83bef0" file="dev.properties" key="mulesoft12345678" />
 
 
 

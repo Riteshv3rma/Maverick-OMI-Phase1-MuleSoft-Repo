@@ -349,4 +349,13 @@ payload]"/>
 		<flow-ref doc:name="upsert-credit-memos-Sub_Flow" doc:id="4fcf2121-f0bc-406c-9b53-42a31a4ad4ca" name="upsertInvoiceSub_Flow" />
 		<logger level="INFO" doc:name="Logger" doc:id="1adeb15a-ec9d-4ad6-a1c5-ea6eb09fc657" message="upsert Credit Memo Response in SFDC= #[payload]" />
 	</flow>
+	<flow name="get:\sales\credit-memos\items\(sfdcCreditMemoId):omi-esb-sync-salescloud-api-config" doc:id="8dda1f90-01c7-422a-92cb-cec024cf65e7" >
+		<ee:transform doc:name="Transform Message" doc:id="b5ac3724-293d-45db-b6db-fbf5a0efbfd9" >
+			<ee:variables >
+				<ee:set-variable variableName="sfdcCreditMemoId" ><![CDATA[attributes.uriParams.sfdcCreditMemoId]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="getSfdcItemsByCreditMemoIdFlow" doc:id="dff55ed5-5819-4f17-9e55-0f37f27b8cf6" name="getSfdcItemsByCreditMemoIdFlow" />
+		<logger level="INFO" doc:name="Logger" doc:id="114e1201-3221-4c11-a7df-303e09c6b758" message="getItemResponseByCreditMemoId= #[payload]" />
+	</flow>
 </mule>
