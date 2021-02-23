@@ -188,7 +188,7 @@ vars.itemPayload map {
 	Unit_Price__c: if ($.nsUnitPrice != null) $.nsUnitPrice * -1 else 0.0,
 	Amount__c: if ($.nsAmount != null) $.nsAmount * -1 else 0.0,
 	//Department__c: $.nsDepartment,
-	Credit_Memo__r: {
+	Invoice__r: {
 		'Netsuite_Internal_ID__c' : vars.internalId,
 		'type': 'Invoice__c'
 	}
@@ -300,7 +300,7 @@ output application/java
 }]]]></ee:set-payload>
 							</ee:message>
 						</ee:transform>
-						<flow-ref doc:name="updateInvoiceFlow" doc:id="3ea00d96-9ec0-454c-8aaf-bfe703d5167c" name="updateCreditMemoFlow"/>
+						<flow-ref doc:name="updateCreditMemoFlow" doc:id="3ea00d96-9ec0-454c-8aaf-bfe703d5167c" name="updateCreditMemoFlow"/>
 						<validation:is-true doc:name="Is credit memo marked processed in NetSuite?" doc:id="5538c68d-ced6-4ddd-9c1c-f1e9045e07e7" expression="#[payload.status.isSuccess]" message="update credit memo NetSuite operation has failed."/>
 				<ee:transform doc:name="Set successful data in transactionStats" doc:id="c8fb0b08-79c6-4f3d-8540-a36837ac44e1" doc:description="Set successful data in transactionStats">
 							<ee:message >
