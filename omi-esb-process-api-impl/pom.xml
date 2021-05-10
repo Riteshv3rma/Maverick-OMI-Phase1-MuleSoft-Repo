@@ -4,7 +4,7 @@
 
 	<groupId>com.omi</groupId>
 	<artifactId>omi-esb-process-api-impl</artifactId>
-	<version>1.1.8-SNAPSHOT</version>
+	<version>1.1.9-SNAPSHOT</version>
 	<packaging>mule-application</packaging>
 
 	<name>omi-esb-process-api-impl</name>
@@ -77,6 +77,12 @@
             <groupId>org.mule.connectors</groupId>
             <artifactId>mule-vm-connector</artifactId>
             <version>2.0.0</version>
+            <classifier>mule-plugin</classifier>
+        </dependency>
+    	<dependency>
+            <groupId>com.mulesoft.connectors</groupId>
+            <artifactId>mule-salesforce-connector</artifactId>
+            <version>10.2.0</version>
             <classifier>mule-plugin</classifier>
         </dependency>
     </dependencies>

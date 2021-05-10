@@ -9,9 +9,9 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 		<http:listener-connection host="0.0.0.0" port="8082" />
 	</http:listener-config>
 	<flow name="reprocess-salesorder-sfdc-to-netsuiteFlow" doc:id="affdab43-94d6-482e-9dbe-2ba5d7f252ac" >
-		<scheduler doc:name="Scheduler" doc:id="91af7f26-fdec-4be5-b390-5ab547f95527" >
+		<scheduler doc:name="Scheduler" doc:id="57bab079-e418-4d2d-9ff4-e71a4acec5ba" >
 			<scheduling-strategy >
-				<cron expression="${reprocess.samples.sfdc.netsuite.cron}"/>
+				<cron expression="${reprocess.samples.sfdc.netsuite.cron}" />
 			</scheduling-strategy>
 		</scheduler>
 		<flow-ref doc:name="getSalesOrderInSfdcByStatusFlow" doc:id="a5891608-4131-4568-b966-5b619198b54d" name="getSalesOrderInSfdcByStatusFlow"/>
@@ -51,7 +51,8 @@ payload map {
 	"poNumber": $.PO_Num__c,
 	"salesRepId": $.SalesRep_External_Id__c,
 	"notes": $.Notes__c,
-	"productList": (if ( $.Notes__c != null) addNotesInItems($.Products__r, $.Notes__c) else $.Products__r) map {
+	//"productList": (if ( $.Notes__c != null) addNotesInItems($.Products__r, $.Notes__c) else $.Products__r) map {
+	"productList": ($.Products__r) map {
 		"productName": $.Product_Name_Sync__c,
 		"productId": $.Item_No__c,
 		"quantity": $.Quantity__c,
